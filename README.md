@@ -2,7 +2,7 @@
 
 A lightweight desktop host for modular terminals. Load a terminal, switch workspaces, and use the controls supplied by that module. The GUI stays independent of AI models and their environments.
 
-The dark green interface includes hover highlights, subtle animated window/panel lighting, adjustable reading fonts, and an effects toggle. It uses Python/Tk and the standard library, with no third-party runtime packages.
+Choose **Logos Classic** (the original design) or **Galactic Phosphor** in Settings. Both use the same modular workspace layout. Galactic Phosphor adds pure black and neon green, luminous vector icons, cascading galactic glyphs, soft text glow and block cursors. The host uses Python/Tk and the standard library, with no third-party runtime packages.
 
 ## Run
 
@@ -69,6 +69,20 @@ Add `--probe` to start its worker, verify the handshake, and stop that owned pro
 Enter sends; Shift+Enter adds a line; Ctrl+L focuses input. New/History are enabled when the connected module provides saved conversations. Stop terminates the owned worker process tree; completed saved conversations remain in the backend.
 
 The host remembers module paths, sessions, font size, and effects in ignored `state/` files. Notes and connector configuration use separate module data folders. Ambient lighting pauses while the window is inactive. See the [user guide](docs/USER_GUIDE.md).
+
+## Themes
+
+Open **Settings**, choose a theme, and click **Apply**. Switching preserves loaded modules, running connections, transcripts and drafts. Existing installations default to the original Logos Classic design.
+
+**Theme elements** shows the selected theme's parsed palette, typography, component styles, effects, or flat named tokens. **Export theme** saves a reusable definition; **Import theme** validates and installs another definition. Themes are versioned JSON data. They cannot execute scripts or change the module protocol or workspace layout.
+
+To create another theme, export one, change its `id` and `name`, edit its elements, then import it. Bundled definitions live in [themes/](themes/); imported definitions are local settings. See the [theme authoring guide](docs/THEMES.md) and [theme schema](themes/theme.schema.json).
+
+```sh
+python tools/theme.py validate themes/galactic-phosphor.theme.json
+python tools/theme.py inspect themes/galactic-phosphor.theme.json --group palette
+python tools/theme.py inspect themes/galactic-phosphor.theme.json --flat
+```
 
 ## Development
 

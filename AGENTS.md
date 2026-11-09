@@ -6,3 +6,4 @@
 - Preserve unrelated module settings and backend sessions. Do not commit state/, work/, credentials, model weights, Bible corpora, or conversation databases.
 - Validate changes with `python -m unittest discover -v`. Run `python tools/check_schemas.py` when manifests/schema change. Tk layout checks need a display or Xvfb.
 - Follow the repository's existing GPL v3 license.
+- Themes are data-only definitions with their own versioned schema. Keep terminal_themes.py, themes/theme.schema.json, docs/THEMES.md, and renderer inputs consistent. Preserve the original default and the workspace layout; switching themes must retain processes, session state, transcripts and drafts.

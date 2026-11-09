@@ -17,6 +17,8 @@ import uuid
 
 from terminal_core import ANSI, TerminalModule, TerminalProcess, console_python, discover, read_preferences, write_preferences
 from terminal_protocol import API_VERSION, HOST_VERSION
+from terminal_themes import ThemeCatalog
+from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
 
 ROOT = Path(__file__).resolve().parent
 BG = "#040907"
@@ -28,6 +30,20 @@ TEXT = "#d1e8d6"
 MUTED = "#7e9d86"
 EDGE = "#244e32"
 ERROR = "#ffb19d"
+FONT_FAMILY = "Consolas"
+PALETTE = {"selection": "#265339", "selection_text": BRIGHT, "code_background": "#0d2116", "placeholder": "#5f7e68",
+           "disabled": "#4d6654", "button_fill": "#184229", "button_disabled": "#183323", "footer": "#536d5b"}
+
+
+def activate_palette(theme, window):
+    """Resolve a data-only theme for this single host and its owned dialogs."""
+    global BG, PANEL, FIELD, GREEN, BRIGHT, TEXT, MUTED, EDGE, ERROR, FONT_FAMILY, PALETTE
+    PALETTE = theme.palette
+    BG, PANEL, FIELD = (PALETTE[k] for k in ("background", "panel", "field"))
+    GREEN, BRIGHT, TEXT, MUTED, EDGE, ERROR = (PALETTE[k] for k in ("accent", "accent_bright", "text", "muted", "edge", "error"))
+    available = set(tkfont.families(window))
+    FONT_FAMILY = next((f for f in theme.data["typography"]["families"] if f in available), "Courier")
+    window.terminal_theme, window.terminal_font_family = theme, FONT_FAMILY
 
 
 def mix(a, b, amount):
@@ -51,7 +67,9 @@ def native_frame(window, border=None):
             value = ctypes.c_uint(int(border[5:7]+border[3:5]+border[1:3],16))
             setter(hwnd, 34, ctypes.byref(value), ctypes.sizeof(value))
         else:
-            for attribute, color in [(20, 1), (34, 0x00324e24), (35, 0x000c1007), (36, 0x00a5f68d)]:
+            def dwm_color(color):
+                return int(color[5:7]+color[3:5]+color[1:3], 16)
+            for attribute, color in [(20, 1), (34, dwm_color(EDGE)), (35, dwm_color(PANEL)), (36, dwm_color(GREEN))]:
                 value = ctypes.c_uint(color)
                 setter(hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value))
     except (OSError, AttributeError):
@@ -60,13 +78,18 @@ def native_frame(window, border=None):
 
 class NeonButton(tk.Canvas):
     """Small canvas buttons: color interpolation, no image assets or shader loop."""
-    def __init__(self, parent, text, command, width=105, height=36, primary=False, small=False):
+    def __init__(self, parent, text, command, width=105, height=36, primary=False, small=False, icon=None):
         super().__init__(parent, width=width, height=height, bg=parent.cget("bg"), highlightthickness=0,
                          bd=0, takefocus=1, cursor="hand2")
         self.label, self.command, self.primary = text, command, primary
         self.active = self.hover = False
         self.enabled, self.level, self.job = True, 0.0, None
         self.small = small
+        self.icon, self.pulse = icon, 0.0
+        top = self.winfo_toplevel()
+        self.theme = top.terminal_theme
+        self.font_family = top.terminal_font_family
+        top.terminal_buttons.append(self)
         self.bind("<Configure>", lambda e: self.draw())
         self.bind("<Enter>", lambda e: self.target(True))
         self.bind("<Leave>", lambda e: self.target(False))
@@ -75,7 +98,10 @@ class NeonButton(tk.Canvas):
         self.bind("<Button-1>", lambda e: self.invoke())
         self.bind("<Return>", lambda e: self.invoke())
         self.bind("<space>", lambda e: self.invoke())
-        self.after_idle(self.draw)
+        def first_draw():
+            self.initial_draw = None
+            self.draw()
+        self.initial_draw = self.after_idle(first_draw)
 
     def invoke(self):
         if self.enabled:
@@ -114,13 +140,38 @@ class NeonButton(tk.Canvas):
             return
         self.delete("all")
         w, h = self.winfo_width() if self.winfo_width() > 1 else int(self.cget("width")), int(self.cget("height"))
+        palette = self.theme.palette
+        BG, PANEL, GREEN, BRIGHT, TEXT, EDGE = (palette[k] for k in ("background", "panel", "accent", "accent_bright", "text", "edge"))
         selected = self.active or self.primary
         amount = max(self.level, 0.5 if selected else 0)
-        outline = mix(EDGE, GREEN, amount) if self.enabled else "#183323"
-        fill = mix(PANEL, "#184229", amount * 0.85)
+        outline = mix(EDGE, GREEN, amount) if self.enabled else palette["button_disabled"]
+        fill = mix(PANEL, palette["button_fill"], amount * 0.85)
         color = BRIGHT if self.level > .3 else GREEN if selected else TEXT
         if not self.enabled:
-            color = "#4d6654"
+            color = palette["disabled"]
+        if self.theme.components["button_style"] == "phosphor":
+            intensity = min(1, amount+.22+self.pulse*.14) if self.enabled else .08
+            for offset, power in ((0, .06), (1, .15), (2, .30)):
+                self.create_rectangle(1+offset, 1+offset, w-2-offset, h-2-offset,
+                                      outline=mix(BG, GREEN, intensity*power))
+            self.create_polygon(7, 4, w-8, 4, w-4, 8, w-4, h-8, w-8, h-4, 7, h-4, 4, h-8, 4, 8,
+                                fill=fill, outline=mix(EDGE, GREEN, intensity), width=1)
+            if self.active:
+                self.create_line(6, 11, 6, h-11, fill=GREEN, width=2)
+            x, anchor = (w/2, "center")
+            if self.icon and self.theme.components["module_icons"]:
+                size = 27 if h >= 45 else 18
+                draw_icon(self, self.icon, 14, (h-size)/2, size, color, mix(BG, GREEN, .16+amount*.16))
+                x, anchor = 53 if h >= 45 else 39, "w"
+            font = (self.font_family, 10 if self.small else 11, "bold" if selected else "normal")
+            options = {"text": self.label, "anchor": anchor, "font": font}
+            if anchor == "w":
+                options["width"] = max(24, w-x-9)
+            if self.enabled:
+                for dx, dy in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                    self.create_text(x+dx, h/2+dy, fill=mix(BG, color, .17+amount*.10), **options)
+            self.create_text(x, h/2, fill=color, **options)
+            return
         # A faint second outline gives a restrained glow on hover.
         if self.level > .2:
             self.create_rectangle(1, 1, w-2, h-2, outline=mix(BG, GREEN, self.level*.15))
@@ -129,7 +180,23 @@ class NeonButton(tk.Canvas):
         if self.active:
             self.create_line(5, 10, 5, h-10, fill=GREEN, width=3)
         self.create_text(w/2, h/2, text=self.label, fill=color,
-                         font=("Consolas", 10 if self.small else 11, "bold" if selected else "normal"))
+                         font=(self.font_family, 10 if self.small else 11, "bold" if selected else "normal"))
+
+    def set_pulse(self, phase):
+        phase = round(phase*12)/12
+        if phase != self.pulse:
+            self.pulse = phase
+            if self.theme.components["button_style"] == "phosphor":
+                self.draw()
+
+    def destroy(self):
+        if self.initial_draw:
+            self.after_cancel(self.initial_draw)
+            self.initial_draw = None
+        if self.job:
+            self.after_cancel(self.job)
+            self.job = None
+        super().destroy()
 
 
 class TerminalGUI:
@@ -137,6 +204,12 @@ class TerminalGUI:
         self.window, self.root = root, Path(app_root)
         self.preference_path = self.root / "state/terminal_ui.json"
         self.preferences = read_preferences(self.preference_path)
+        self.theme_catalog = ThemeCatalog(self.root)
+        self.theme = self.theme_catalog.selected(self.preferences.get("theme", "logos-classic"))
+        self.preferences["theme"] = self.theme.id
+        activate_palette(self.theme, root)
+        root.terminal_buttons = []
+        self.atmosphere = None
         self.modules, errors = discover(self.root, self.preferences["modules"])
         self.events, self.processes, self.workspaces = queue.Queue(), {}, {}
         self.current = None
@@ -149,9 +222,24 @@ class TerminalGUI:
         root.minsize(980, 650)
         root.configure(bg=BG)
         root.protocol("WM_DELETE_WINDOW", self.close)
-        self.body_font = tkfont.Font(family="Consolas", size=self.preferences["font_size"])
-        self.bold_font = tkfont.Font(family="Consolas", size=self.preferences["font_size"], weight="bold")
-        self.small_font = ("Consolas", 10)
+        self.body_font = tkfont.Font(family=FONT_FAMILY, size=self.preferences["font_size"])
+        self.bold_font = tkfont.Font(family=FONT_FAMILY, size=self.preferences["font_size"], weight="bold")
+        self.small_font = (FONT_FAMILY, 10)
+        self.configure_style()
+        self.build_layout()
+        self.draw_modules()
+        selected = self.preferences.get("selected")
+        if self.modules:
+            self.select_module(selected if selected in self.modules else next(iter(self.modules)))
+        self.setup_atmosphere()
+        for error in errors + self.theme_catalog.errors:
+            self.show_system(error, "error")
+        self.window.after(70, self.poll)
+        self.window.after(120, self.animate)
+        self.window.after(80, lambda: native_frame(self.window))
+
+    def configure_style(self):
+        root = self.window
         style = ttk.Style(root)
         style.theme_use("clam")
         style.configure("TCombobox", fieldbackground=FIELD, background=FIELD, foreground=GREEN,
@@ -159,22 +247,12 @@ class TerminalGUI:
         style.map("TCombobox", fieldbackground=[("readonly", FIELD)], foreground=[("readonly", GREEN)], selectbackground=[("readonly", FIELD)], selectforeground=[("readonly", GREEN)])
         root.option_add("*TCombobox*Listbox.background", FIELD)
         root.option_add("*TCombobox*Listbox.foreground", TEXT)
-        root.option_add("*TCombobox*Listbox.selectBackground", "#244e32")
-        root.option_add("*TCombobox*Listbox.font", "Consolas 11")
-        self.build_layout()
-        self.draw_modules()
-        selected = self.preferences.get("selected")
-        if self.modules:
-            self.select_module(selected if selected in self.modules else next(iter(self.modules)))
-        for error in errors:
-            self.show_system(error, "error")
-        self.window.after(70, self.poll)
-        self.window.after(120, self.animate)
-        self.window.after(80, lambda: native_frame(self.window))
+        root.option_add("*TCombobox*Listbox.selectBackground", PALETTE["selection"])
+        root.option_add("*TCombobox*Listbox.font", f"{{{FONT_FAMILY}}} 11")
 
-    def label(self, parent, text, color=TEXT, size=11, bold=False, **kwargs):
-        return tk.Label(parent, text=text, bg=parent.cget("bg"), fg=color,
-                        font=("Consolas", size, "bold" if bold else "normal"), **kwargs)
+    def label(self, parent, text, color=None, size=11, bold=False, **kwargs):
+        return tk.Label(parent, text=text, bg=parent.cget("bg"), fg=color or TEXT,
+                        font=(FONT_FAMILY, size, "bold" if bold else "normal"), **kwargs)
 
     def panel(self, parent, **kwargs):
         frame = tk.Frame(parent, bg=PANEL, highlightthickness=1, highlightbackground=EDGE, **kwargs)
@@ -183,6 +261,7 @@ class TerminalGUI:
 
     def build_layout(self):
         outer = tk.Frame(self.window, bg=BG, padx=20, pady=15)
+        self.outer = outer
         outer.pack(fill="both", expand=True)
         header = tk.Frame(outer, bg=BG)
         header.pack(fill="x", pady=(0, 17))
@@ -198,7 +277,7 @@ class TerminalGUI:
         self.label(brand, "M O D U L A R   W O R K S P A C E", MUTED, 9).pack(anchor="w", pady=(3, 0))
         self.effects_button = NeonButton(header, "◈ Effects on", self.toggle_effects, width=130, small=True)
         self.effects_button.pack(side="right", padx=(10, 0))
-        NeonButton(header, "Settings", self.settings, width=105, small=True).pack(side="right")
+        NeonButton(header, "Settings", self.settings, width=105, small=True, icon="gear").pack(side="right")
         body = tk.Frame(outer, bg=BG)
         body.pack(fill="both", expand=True)
         sidebar = self.panel(body, width=212)
@@ -209,18 +288,18 @@ class TerminalGUI:
         self.module_count.pack(fill="x", padx=17, pady=(21, 18))
         module_area = tk.Frame(sidebar, bg=PANEL)
         module_area.pack(fill="both", expand=True, padx=9)
-        self.module_canvas = tk.Canvas(module_area, bg=PANEL, width=180, highlightthickness=0, bd=0)
+        self.module_canvas = RainCanvas(module_area, bg=PANEL, width=180)
         self.module_canvas.pack(side="left", fill="both", expand=True)
         self.module_list = tk.Frame(self.module_canvas, bg=PANEL)
         self.module_canvas_item = self.module_canvas.create_window(0, 0, window=self.module_list, anchor="nw")
-        self.module_list.bind("<Configure>", lambda e: self.module_canvas.configure(scrollregion=self.module_canvas.bbox("all")))
+        self.module_list.bind("<Configure>", lambda e: self.module_canvas.configure(scrollregion=self.module_canvas.bbox(self.module_canvas_item)))
         self.module_canvas.bind("<Configure>", lambda e: self.module_canvas.itemconfigure(self.module_canvas_item, width=e.width))
         self.module_canvas.bind("<MouseWheel>", lambda e: self.module_canvas.yview_scroll(-int(e.delta/120), "units"))
         bottom = tk.Frame(sidebar, bg=PANEL)
         bottom.pack(side="bottom", fill="x", padx=12, pady=15)
         NeonButton(bottom, "+ Load terminal", self.load_dialog, width=184, primary=True).pack(fill="x", pady=(0, 14))
         self.label(bottom, "LOCAL WORKSPACE", MUTED, 9, anchor="w").pack(fill="x", padx=5)
-        self.label(bottom, "Your tools. One interface.", "#59715f", 8, anchor="w").pack(fill="x", padx=5, pady=(5, 0))
+        self.label(bottom, "Your tools. One interface.", PALETTE["footer"], 8, anchor="w").pack(fill="x", padx=5, pady=(5, 0))
         main = tk.Frame(body, bg=BG)
         main.pack(side="left", fill="both", expand=True)
         module_head = tk.Frame(main, bg=BG)
@@ -254,22 +333,26 @@ class TerminalGUI:
         self.copy_button.pack(side="right")
         text_wrap = tk.Frame(transcript_panel, bg=PANEL)
         text_wrap.pack(fill="both", expand=True, padx=13, pady=(8, 10))
-        self.transcript = tk.Text(text_wrap, bg=PANEL, fg=TEXT, font=self.body_font, wrap="word", bd=0,
-            highlightthickness=0, padx=12, pady=10, spacing1=1, spacing3=4, selectbackground="#265339",
-            selectforeground=BRIGHT, cursor="arrow", state="disabled", exportselection=False)
+        self.transcript = PhosphorText(text_wrap, bg=PANEL, fg=TEXT, font=self.body_font, wrap="word", bd=0,
+            highlightthickness=0, padx=12, pady=10, spacing1=1, spacing3=4, selectbackground=PALETTE["selection"],
+            selectforeground=PALETTE["selection_text"], cursor="arrow", state="disabled", exportselection=False)
+        self.transcript.set_theme(self.theme, self.preferences["effects"])
         self.transcript.pack(side="left", fill="both", expand=True)
-        scrollbar = tk.Scrollbar(text_wrap, command=self.transcript.yview, bg=EDGE, troughcolor=PANEL,
-                                activebackground=GREEN, width=9, bd=0, highlightthickness=0)
+        if self.theme.components["button_style"] == "phosphor":
+            scrollbar = NeonScrollbar(text_wrap, self.transcript.yview, PALETTE)
+        else:
+            scrollbar = tk.Scrollbar(text_wrap, command=self.transcript.yview, bg=EDGE, troughcolor=PANEL,
+                                    activebackground=GREEN, width=9, bd=0, highlightthickness=0)
         scrollbar.pack(side="right", fill="y")
         self.transcript.configure(yscrollcommand=scrollbar.set)
-        self.transcript.tag_configure("label", foreground=GREEN, font=("Consolas", 9, "bold"), spacing1=18, spacing3=7)
+        self.transcript.tag_configure("label", foreground=GREEN, font=(FONT_FAMILY, 9, "bold"), spacing1=18, spacing3=7)
         self.transcript.tag_configure("body", foreground=TEXT, lmargin1=12, lmargin2=12)
-        self.transcript.tag_configure("user", foreground="#a2caaa", lmargin1=12, lmargin2=12)
+        self.transcript.tag_configure("user", foreground=PALETTE["user"], lmargin1=12, lmargin2=12)
         self.transcript.tag_configure("bold", foreground=BRIGHT, font=self.bold_font)
-        self.transcript.tag_configure("code", background="#0d2116", foreground=GREEN)
+        self.transcript.tag_configure("code", background=PALETTE["code_background"], foreground=GREEN)
         self.transcript.tag_configure("muted", foreground=MUTED)
         self.transcript.tag_configure("error", foreground=ERROR, lmargin1=12, lmargin2=12)
-        self.transcript.tag_configure("welcome", foreground=GREEN, font=("Consolas", 21, "bold"), spacing1=20, spacing3=15)
+        self.transcript.tag_configure("welcome", foreground=GREEN, font=(FONT_FAMILY, 21, "bold"), spacing1=20, spacing3=15)
         composer = self.panel(main)
         composer.pack(fill="x", pady=(12, 0))
         composer_top = tk.Frame(composer, bg=PANEL)
@@ -277,14 +360,16 @@ class TerminalGUI:
         self.input_label = self.label(composer_top, "MESSAGE", MUTED, 9, True)
         self.input_label.pack(side="left")
         self.translation = tk.StringVar(value="KJV")
-        self.translation_box = ttk.Combobox(composer_top, textvariable=self.translation, values=["KJV"], width=8, state="readonly", font=("Consolas", 10))
+        self.translation_box = ttk.Combobox(composer_top, textvariable=self.translation, values=["KJV"], width=8, state="readonly", font=(FONT_FAMILY, 10))
         self.hint = self.label(composer_top, "Enter to send  ·  Shift+Enter for a new line", MUTED, 9)
         self.hint.pack(side="right")
         row = tk.Frame(composer, bg=PANEL)
         row.pack(fill="x", padx=17, pady=(4, 13))
         self.input = tk.Text(row, height=3, bg=FIELD, fg=BRIGHT, insertbackground=GREEN, font=self.body_font,
             bd=0, highlightthickness=1, highlightbackground=EDGE, highlightcolor=GREEN, padx=12, pady=10,
-            wrap="word", selectbackground="#265339", undo=True, exportselection=False)
+            wrap="word", selectbackground=PALETTE["selection"], undo=True, exportselection=False,
+            insertwidth=self.body_font.measure("M") if self.theme.effects["block_cursor"] else 2,
+            insertofftime=500 if self.preferences["effects"] else 0, insertontime=600)
         self.input.pack(side="left", fill="both", expand=True)
         self.input.bind("<Return>", self.enter)
         self.input.bind("<Shift-Return>", lambda e: None)
@@ -300,7 +385,7 @@ class TerminalGUI:
         footer.pack(fill="x", pady=(9, 0))
         self.footer = self.label(footer, "Ready to load a terminal", MUTED, 9, anchor="w")
         self.footer.pack(side="left", fill="x", expand=True)
-        self.label(footer, "HOST 1.0  /  MODULE API 1.0", "#536d5b", 8).pack(side="right")
+        self.label(footer, f"HOST {HOST_VERSION}  /  MODULE API {API_VERSION}", PALETTE["footer"], 8).pack(side="right")
         # Reserve the composer and footer before allocating the flexible transcript.
         # This keeps input visible at the minimum window size and larger DPI scales.
         transcript_panel.pack_forget()
@@ -327,8 +412,10 @@ class TerminalGUI:
             child.destroy()
         self.module_buttons.clear()
         self.module_count.configure(text=f"TERMINALS  /  {len(self.modules):02d}")
-        for identifier, module in self.modules.items():
-            button = NeonButton(self.module_list, ">_  " + module.name, lambda i=identifier: self.select_module(i), width=190, height=49)
+        icons = ("reticle", "network", "chip", "document", "gear")
+        for index, (identifier, module) in enumerate(self.modules.items()):
+            label = module.name if self.theme.components["module_icons"] else ">_  " + module.name
+            button = NeonButton(self.module_list, label, lambda i=identifier: self.select_module(i), width=190, height=49, icon=icons[index % len(icons)])
             button.pack(fill="x", pady=(0, 4))
             button.bind("<MouseWheel>", lambda e: self.module_canvas.yview_scroll(-int(e.delta/120), "units"))
             self.module_buttons[identifier] = button
@@ -360,6 +447,8 @@ class TerminalGUI:
         self.render_transcript()
         self.refresh_controls()
         self.save()
+        if self.atmosphere:
+            self.window.after_idle(self.refresh_atmosphere)
 
     def action(self):
         return next(a for a in self.modules[self.current].actions if a["id"] == self.workspace()["action"])
@@ -369,7 +458,8 @@ class TerminalGUI:
         for key, button in self.action_buttons.items():
             button.configure_state(active=key == action)
         descriptor = self.action()
-        self.input_label.configure(text=descriptor["label"].upper())
+        label = descriptor["label"].upper()
+        self.input_label.configure(text=f"> {self.current}:~$  {label}" if self.theme.components["terminal_prompts"] else label)
         self.send_button.configure_state(text=descriptor.get("button", "Send") + " →")
         self.hide_placeholder()
         self.show_placeholder()
@@ -387,7 +477,7 @@ class TerminalGUI:
         if not self.current or self.input.get("1.0", "end-1c").strip() or self.input.focus_get() == self.input:
             return
         self.input.insert("1.0", self.action().get("placeholder", "Type a message…"))
-        self.input.configure(fg="#5f7e68")
+        self.input.configure(fg=PALETTE["placeholder"])
         self.placeholder = True
 
     def hide_placeholder(self):
@@ -430,9 +520,14 @@ class TerminalGUI:
         self.transcript.delete("1.0", "end")
         state = self.workspace()
         if not state["entries"]:
-            self.transcript.insert("end", "\nMake room for clear thinking.\n", "welcome")
-            self.transcript.insert("end", self.modules[self.current].description + ".\n\n", "body")
-            self.transcript.insert("end", "Type below to begin. The terminal connects when you send.\n\nSwitch terminals in the sidebar, or load another module at any time.\n", "muted")
+            if self.theme.components["terminal_prompts"]:
+                self.transcript.insert("end", "\n> WORKSPACE READY\n", "welcome")
+                self.transcript.insert("end", "> " + self.modules[self.current].description + "\n\n", "body")
+                self.transcript.insert("end", "> Module registered. Send a command to connect.\n\n> Awaiting input.\n", "muted")
+            else:
+                self.transcript.insert("end", "\nMake room for clear thinking.\n", "welcome")
+                self.transcript.insert("end", self.modules[self.current].description + ".\n\n", "body")
+                self.transcript.insert("end", "Type below to begin. The terminal connects when you send.\n\nSwitch terminals in the sidebar, or load another module at any time.\n", "muted")
         self.transcript.configure(state="disabled")
         for role, text in state["entries"]:
             self.render_entry(role, text)
@@ -442,7 +537,8 @@ class TerminalGUI:
         if len(self.workspace()["entries"]) == 1:
             self.transcript.delete("1.0", "end")
         labels = {"user": "YOU", "assistant": self.modules[self.current].name.upper(), "source": "REFERENCE", "system": "WORKSPACE", "error": "ATTENTION", "terminal": "TERMINAL"}
-        self.transcript.insert("end", labels.get(role, role.upper()) + "\n", "label")
+        prefix = "> " if self.theme.components["terminal_prompts"] else ""
+        self.transcript.insert("end", prefix + labels.get(role, role.upper()) + "\n", "label")
         tag = "error" if role == "error" else "user" if role == "user" else "body"
         in_code = False
         for line in text.splitlines():
@@ -450,6 +546,8 @@ class TerminalGUI:
                 in_code = not in_code
                 continue
             line = re.sub(r"^#{1,6}\s+", "", line)
+            if prefix and role == "system":
+                self.transcript.insert("end", prefix, tag)
             for piece in re.split(r"(\*\*.+?\*\*|`[^`]+`)", line):
                 if piece.startswith("**") and piece.endswith("**"):
                     self.transcript.insert("end", piece[2:-2], (tag, "bold"))
@@ -654,6 +752,8 @@ class TerminalGUI:
 
     def dialog(self, title, geometry="620x400"):
         dialog = tk.Toplevel(self.window, bg=BG)
+        dialog.terminal_theme, dialog.terminal_font_family = self.theme, FONT_FAMILY
+        dialog.terminal_buttons = self.window.terminal_buttons
         dialog.title(title)
         dialog.geometry(geometry)
         dialog.transient(self.window)
@@ -668,8 +768,8 @@ class TerminalGUI:
         dialog = self.dialog(event.get("text", "Choose an item"), "720x420")
         self.label(dialog, event.get("text", "Choose an item"), GREEN, 15, True).pack(anchor="w", padx=23, pady=20)
         items = event.get("items", [])
-        box = tk.Listbox(dialog, bg=FIELD, fg=TEXT, selectbackground="#254f34", selectforeground=BRIGHT,
-                         font=("Consolas", 11), bd=0, highlightthickness=1, highlightbackground=EDGE, activestyle="none")
+        box = tk.Listbox(dialog, bg=FIELD, fg=TEXT, selectbackground=PALETTE["selection"], selectforeground=BRIGHT,
+                          font=(FONT_FAMILY, 11), bd=0, highlightthickness=1, highlightbackground=EDGE, activestyle="none")
         box.pack(fill="both", expand=True, padx=23, pady=(0, 15))
         for item in items:
             box.insert("end", (item.get("date", "") + "  " if item.get("date") else "") + item.get("label", item["id"]))
@@ -693,7 +793,7 @@ class TerminalGUI:
             return
         dialog = self.dialog(self.modules[self.current].name + " — Logs", "850x470")
         self.label(dialog, "TERMINAL LOGS", GREEN, 15, True).pack(anchor="w", padx=22, pady=17)
-        text = tk.Text(dialog, bg=FIELD, fg=MUTED, font=("Consolas", 10), bd=0, padx=14, pady=12, wrap="word")
+        text = tk.Text(dialog, bg=FIELD, fg=MUTED, font=(FONT_FAMILY, 10), bd=0, padx=14, pady=12, wrap="word")
         text.pack(fill="both", expand=True, padx=22, pady=(0, 22))
         text.insert("1.0", "\n".join(self.workspace()["logs"]) or "No diagnostics have been emitted by this terminal.")
         text.configure(state="disabled")
@@ -730,7 +830,7 @@ class TerminalGUI:
         row = tk.Frame(parent, bg=BG)
         row.pack(fill="x")
         entry = tk.Entry(row, textvariable=variable, bg=FIELD, fg=TEXT, insertbackground=GREEN,
-                         relief="flat", highlightthickness=1, highlightbackground=EDGE, highlightcolor=GREEN, font=("Consolas", 11))
+                         relief="flat", highlightthickness=1, highlightbackground=EDGE, highlightcolor=GREEN, font=(FONT_FAMILY, 11))
         entry.pack(side="left", fill="x", expand=True, ipady=8)
         if browse:
             NeonButton(row, "Browse", browse, width=83, height=34, small=True).pack(side="right", padx=(8, 0))
@@ -775,14 +875,46 @@ class TerminalGUI:
         NeonButton(body, "Add terminal", save_link, width=150, primary=True).pack(anchor="e")
 
     def settings(self):
-        dialog = self.dialog("Workspace settings", "650x360")
+        self.theme_catalog.reload()
+        dialog = self.dialog("Workspace settings", "700x535")
         body = tk.Frame(dialog, bg=BG, padx=25, pady=22)
         body.pack(fill="both", expand=True)
         self.label(body, "WORKSPACE SETTINGS", GREEN, 16, True).pack(anchor="w", pady=(0, 14))
-        self.label(body, "Lighting is subtle and pauses when the window is inactive.", MUTED, 10).pack(anchor="w")
+        self.label(body, "Theme", MUTED, 10).pack(anchor="w", pady=(2, 6))
+        theme_choice = tk.StringVar()
+        themes = {}
+        choice = ttk.Combobox(body, textvariable=theme_choice, state="readonly", font=(FONT_FAMILY, 11))
+        choice.pack(fill="x")
+        description = self.label(body, "", MUTED, 10, wraplength=640, justify="left", anchor="w", height=3)
+        description.pack(fill="x", pady=(5, 0))
+        def refresh_themes(selected):
+            themes.clear()
+            for theme in sorted(self.theme_catalog.themes.values(), key=lambda t: (t.id != "logos-classic", t.name.casefold())):
+                themes[f"{theme.name}  [{theme.id}]"] = theme
+            choice.configure(values=list(themes))
+            theme_choice.set(next(label for label, theme in themes.items() if theme.id == selected))
+            describe()
+        def describe(event=None):
+            description.configure(text=themes[theme_choice.get()].data["description"])
+        choice.bind("<<ComboboxSelected>>", describe)
+        def import_theme():
+            path = filedialog.askopenfilename(parent=dialog, title="Import a theme definition", filetypes=[("Theme definition", "*.json")])
+            if path:
+                try:
+                    imported = self.theme_catalog.import_file(path)
+                    refresh_themes(imported.id)
+                except (OSError, ValueError, TypeError) as exc:
+                    messagebox.showerror("Cannot import theme", str(exc), parent=dialog)
+        tools = tk.Frame(body, bg=BG)
+        tools.pack(fill="x", pady=(5, 13))
+        NeonButton(tools, "Theme elements", lambda: self.inspect_theme(themes[theme_choice.get()]), width=156, small=True).pack(side="left")
+        NeonButton(tools, "Import theme", import_theme, width=140, small=True).pack(side="left", padx=8)
+        NeonButton(tools, "Export theme", lambda: self.export_theme(themes[theme_choice.get()], dialog), width=140, small=True).pack(side="left")
+        refresh_themes(self.theme_catalog.selected(self.theme.id).id)
         effects = tk.BooleanVar(value=self.preferences["effects"])
-        tk.Checkbutton(body, text="Animate panel lighting", variable=effects, bg=BG, fg=TEXT, activebackground=BG, activeforeground=GREEN,
-                       selectcolor=FIELD, font=("Consolas", 11)).pack(anchor="w", pady=10)
+        tk.Checkbutton(body, text="Enable this theme's animated effects", variable=effects, bg=BG, fg=TEXT, activebackground=BG, activeforeground=GREEN,
+                       selectcolor=FIELD, font=(FONT_FAMILY, 11)).pack(anchor="w", pady=(0, 7))
+        self.label(body, "Animations pause when the app is inactive. Hover feedback stays available.", MUTED, 9).pack(anchor="w")
         size = tk.StringVar(value=str(self.preferences["font_size"]))
         self.entry_row(body, "Reading font size (10–18)", size)
         row = tk.Frame(body, bg=BG)
@@ -794,15 +926,100 @@ class TerminalGUI:
                 value = int(size.get())
                 if not 10 <= value <= 18:
                     raise ValueError("Choose a font size from 10 to 18")
-                self.preferences.update(effects=effects.get(), font_size=value)
-                self.body_font.configure(size=value)
-                self.bold_font.configure(size=value)
-                self.update_effect_label()
-                self.save()
+                self.preferences.update(effects=effects.get(), font_size=value, theme=themes[theme_choice.get()].id)
                 dialog.destroy()
+                self.apply_theme(self.preferences["theme"])
             except ValueError as exc:
                 messagebox.showerror("Check settings", str(exc), parent=dialog)
         NeonButton(row, "Apply", apply, width=110, primary=True).pack(side="right")
+
+    def export_theme(self, theme, parent=None):
+        path = filedialog.asksaveasfilename(parent=parent or self.window, title="Export theme definition",
+            initialfile=theme.id+".theme.json", defaultextension=".json", filetypes=[("Theme definition", "*.json")])
+        if path:
+            try:
+                Path(path).write_text(theme.to_json(), encoding="utf-8")
+            except OSError as exc:
+                messagebox.showerror("Cannot export theme", str(exc), parent=parent or self.window)
+
+    def inspect_theme(self, theme):
+        dialog = self.dialog(theme.name + " - Theme elements", "820x615")
+        self.label(dialog, theme.name.upper(), GREEN, 16, True).pack(anchor="w", padx=22, pady=(20, 7))
+        self.label(dialog, "Versioned, data-only elements. Export a definition to create another theme.", MUTED, 10).pack(anchor="w", padx=22)
+        row = tk.Frame(dialog, bg=BG)
+        row.pack(fill="x", padx=22, pady=13)
+        group = tk.StringVar(value="All elements")
+        options = {"All elements": None, "Palette": "palette", "Typography": "typography", "Components": "components", "Effects": "effects", "Flat tokens": "tokens"}
+        selector = ttk.Combobox(row, textvariable=group, values=list(options), state="readonly", width=22, font=(FONT_FAMILY, 10))
+        selector.pack(side="left")
+        text = tk.Text(dialog, bg=FIELD, fg=TEXT, font=(FONT_FAMILY, 11), wrap="word", bd=0, padx=12, pady=12)
+        text.pack(fill="both", expand=True, padx=22)
+        def render(event=None):
+            selected = options[group.get()]
+            data = theme.tokens() if selected == "tokens" else theme.elements(selected)
+            text.configure(state="normal")
+            text.delete("1.0", "end")
+            text.insert("1.0", json.dumps(data, indent=2))
+            text.configure(state="disabled")
+        selector.bind("<<ComboboxSelected>>", render)
+        render()
+        bottom = tk.Frame(dialog, bg=BG)
+        bottom.pack(fill="x", padx=22, pady=14)
+        def copy():
+            dialog.clipboard_clear()
+            dialog.clipboard_append(text.get("1.0", "end-1c"))
+        NeonButton(bottom, "Copy elements", copy, width=150, small=True).pack(side="left")
+        NeonButton(bottom, "Export theme", lambda: self.export_theme(theme, dialog), width=150, small=True).pack(side="right")
+        text.pack_forget()
+        bottom.pack_forget()
+        bottom.pack(side="bottom", fill="x", padx=22, pady=14)
+        text.pack(fill="both", expand=True, padx=22)
+
+    def apply_theme(self, identifier):
+        """Rebuild only the view, retaining the existing host/module state."""
+        selected = self.current
+        scroll = self.transcript.yview()[0]
+        translation = self.translation.get()
+        if selected:
+            self.workspace()["input"] = self.input_text()
+        self.current = None
+        self.atmosphere = None
+        self.outer.destroy()
+        self.panels, self.module_buttons, self.action_buttons = [], {}, {}
+        self.theme = self.theme_catalog.selected(identifier)
+        self.preferences["theme"] = self.theme.id
+        activate_palette(self.theme, self.window)
+        self.window.configure(bg=BG)
+        self.body_font.configure(family=FONT_FAMILY, size=self.preferences["font_size"])
+        self.bold_font.configure(family=FONT_FAMILY, size=self.preferences["font_size"])
+        self.configure_style()
+        self.build_layout()
+        self.draw_modules()
+        if selected in self.modules:
+            self.select_module(selected)
+            if translation in self.translation_box.cget("values"):
+                self.translation.set(translation)
+        self.window.update_idletasks()
+        self.transcript.yview("moveto", scroll)
+        self.setup_atmosphere()
+        native_frame(self.window)
+        self.save()
+
+    def setup_atmosphere(self):
+        if self.theme.effects["digital_rain"] or self.theme.effects["scanlines"]:
+            self.atmosphere = Atmosphere(self.window, self.theme)
+            self.atmosphere.decorate(self.outer, skip=(self.module_list,))
+            self.atmosphere.register(self.transcript.screen)
+            self.atmosphere.register(self.module_canvas)
+            self.window.after_idle(self.refresh_atmosphere)
+        self.update_effect_label()
+
+    def refresh_atmosphere(self):
+        if self.closing or not self.atmosphere:
+            return
+        self.atmosphere.decorate(self.outer, skip=(self.module_list,))
+        if self.preferences["effects"]:
+            self.atmosphere.tick(0)
 
     def module_settings(self):
         module = self.modules[self.current]
@@ -856,25 +1073,43 @@ class TerminalGUI:
 
     def update_effect_label(self):
         self.effects_button.configure_state(text="◈ Effects on" if self.preferences["effects"] else "◇ Effects off")
+        self.transcript.set_effects(self.preferences["effects"] and self.theme.effects["text_glow"])
+        self.input.configure(insertofftime=500 if self.preferences["effects"] else 0)
+        if self.atmosphere:
+            self.atmosphere.set_enabled(self.preferences["effects"])
         if not self.preferences["effects"]:
             for panel in self.panels:
                 panel.configure(highlightbackground=EDGE)
             self.brand.configure(fg=GREEN)
             native_frame(self.window, EDGE)
+            for button in self.window.terminal_buttons:
+                if button.winfo_exists():
+                    button.set_pulse(0)
 
     def animate(self):
         if self.closing:
             return
         active = self.window.state() != "iconic" and self.window.focus_displayof() is not None
-        if self.preferences["effects"] and active:
+        now = time.monotonic()
+        enabled = self.preferences["effects"] and active
+        if enabled:
             self.metrics["animation_ticks"] += 1
-            phase = (math.sin(time.monotonic() * 1.2) + 1) / 2
-            color = mix(EDGE, "#68bd7c", .15 + phase*.3)
-            for panel in self.panels:
-                panel.configure(highlightbackground=color)
-            self.brand.configure(fg=mix("#80de96", BRIGHT, phase*.45))
-            native_frame(self.window, color)
-        self.window.after(125 if active and self.preferences["effects"] else 500, self.animate)
+            phase = (math.sin(now * 1.2) + 1) / 2
+            if self.theme.effects["pulse"]:
+                color = mix(EDGE, PALETTE["border_glow"], .15 + phase*.3)
+                for panel in self.panels:
+                    panel.configure(highlightbackground=color)
+                self.brand.configure(fg=mix(PALETTE["brand"], BRIGHT, phase*.45))
+                self.window.terminal_buttons[:] = [b for b in self.window.terminal_buttons if b.winfo_exists()]
+                for button in self.window.terminal_buttons:
+                    button.set_pulse(phase)
+                if self.metrics["animation_ticks"] % 4 == 0:
+                    native_frame(self.window, color)
+            if self.atmosphere:
+                self.atmosphere.tick(now-self.last_animation)
+        self.transcript.pulse_cursor(now, enabled and self.theme.effects["block_cursor"])
+        self.last_animation = now
+        self.window.after(round(1000/self.theme.effects["frame_rate"]) if enabled else 500, self.animate)
 
     def save(self):
         try:

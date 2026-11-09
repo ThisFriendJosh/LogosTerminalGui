@@ -150,7 +150,7 @@ def discover(root, extra_paths=()):
 
 
 def read_preferences(path):
-    defaults = {"effects": True, "font_size": 12, "modules": [], "sessions": {}, "selected": "scratchpad"}
+    defaults = {"effects": True, "font_size": 12, "modules": [], "sessions": {}, "selected": "scratchpad", "theme": "logos-classic"}
     try:
         saved = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(saved, dict):
@@ -167,6 +167,8 @@ def read_preferences(path):
             defaults["sessions"] = {k: v for k, v in saved["sessions"].items() if isinstance(k, str) and isinstance(v, str) and 0 < len(v) <= 100}
         if isinstance(saved.get("selected"), str):
             defaults["selected"] = saved["selected"]
+        if isinstance(saved.get("theme"), str) and re.fullmatch(r"[a-z][a-z0-9-]{0,63}", saved["theme"]):
+            defaults["theme"] = saved["theme"]
     except (OSError, ValueError, TypeError):
         pass
     return defaults

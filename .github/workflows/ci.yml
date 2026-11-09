@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install development schema validator
         run: python -m pip install -r requirements-dev.txt
-      - name: Validate schemas and manifests
+      - name: Validate module and theme schemas
         run: python tools/check_schemas.py
       - name: Test host, transport and independent connector
         run: python -m unittest discover -v
@@ -30,4 +30,4 @@ jobs:
         if: runner.os == 'Linux'
         run: xvfb-run -a python -m unittest -v tests.test_gui_layout
       - name: Check source compilation
-        run: python -m compileall -q terminal_gui.py terminal_core.py terminal_protocol.py validate_terminal.py terminals terminal_sdk
+        run: python -m compileall -q terminal_gui.py terminal_core.py terminal_protocol.py terminal_themes.py terminal_visuals.py validate_terminal.py terminals terminal_sdk tools

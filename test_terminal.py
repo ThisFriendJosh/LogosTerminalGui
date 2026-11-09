@@ -11,7 +11,7 @@ import time
 import unittest
 
 from terminal_core import TerminalModule, TerminalProcess, discover, read_preferences, write_preferences
-from terminal_protocol import Channel, ProtocolError, parse_request, parse_server_message, strict_json, validate_payload, version
+from terminal_protocol import HOST_VERSION, Channel, ProtocolError, parse_request, parse_server_message, strict_json, validate_payload, version
 
 ROOT = Path(__file__).resolve().parent
 
@@ -141,7 +141,9 @@ class ModuleTests(unittest.TestCase):
         self.assertNotEqual(modules["logosmind"].command,modules["scratchpad"].command)
 
     def test_incompatible_api_and_host_versions_are_blocked(self):
-        for key,value in [("api_version","2.0.0"),("min_host_version","1.1.0")]:
+        host = version(HOST_VERSION)
+        future_host = f"{host[0]}.{host[1]+1}.0"
+        for key,value in [("api_version","2.0.0"),("min_host_version",future_host)]:
             original=self.data[key];self.data[key]=value;self.save_manifest()
             with self.assertRaises(ValueError):TerminalModule.load(self.path)
             self.data[key]=original
