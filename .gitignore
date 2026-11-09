@@ -66,3 +66,30 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Python and local terminal state
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+state/
+work/
+dist/
+*.egg-info/
+# Terminal backends, model weights, local settings and secrets
+models/
+knowledge/
+source/original_yaml/
+runs/
+exports/
+machine.local.json
+.env
+.env.*
+!.env.example
+*.gguf
+*.safetensors
+*.sqlite3
+*.sqlite3-*

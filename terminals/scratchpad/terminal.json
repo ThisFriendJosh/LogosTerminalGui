@@ -1,0 +1,17 @@
+{
+  "schema": "logos-terminal/1",
+  "$schema": "../../terminal_sdk/terminal.schema.json",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.0.0",
+  "id": "scratchpad",
+  "name": "Scratchpad",
+  "description": "Private local notes • no AI model required",
+  "protocol": "jsonrpc",
+  "command": ["{python}", "-u", "{module}/worker.py", "--state", "{data}/notes.json"],
+  "cwd": "{module}",
+  "actions": [
+    {"id": "note", "label": "Write a note", "placeholder": "Capture a thought or paste a working note…", "button": "Save note"},
+    {"id": "list", "label": "Saved notes", "placeholder": "Optional words to filter your notes…", "button": "Find notes", "allow_empty": true}
+  ]
+}

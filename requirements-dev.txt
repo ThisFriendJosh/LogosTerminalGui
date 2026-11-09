@@ -1,0 +1,2 @@
+# Optional schema conformance checks used by CI; not required to run the host.
+jsonschema>=4.18,<5

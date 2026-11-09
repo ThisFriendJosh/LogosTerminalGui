@@ -1,0 +1,16 @@
+{
+  "$schema": "../terminal.schema.json",
+  "schema": "logos-terminal/1",
+  "id": "example-echo",
+  "name": "Example Terminal",
+  "description": "SDK conformance example • echoes text, no AI",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.0.0",
+  "protocol": "jsonrpc",
+  "command": ["{python}", "-u", "{module}/../worker_template.py"],
+  "cwd": "{module}",
+  "actions": [
+    {"id": "chat", "label": "Echo", "placeholder": "Type text to test the module connection…", "button": "Echo"}
+  ]
+}

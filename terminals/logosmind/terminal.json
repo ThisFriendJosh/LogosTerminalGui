@@ -1,0 +1,27 @@
+{
+  "$schema": "../../terminal_sdk/terminal.schema.json",
+  "schema": "logos-terminal/1",
+  "id": "logosmind",
+  "name": "LogosMind",
+  "description": "Connect your existing LogosMind installation",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.0.0",
+  "protocol": "jsonrpc",
+  "command": ["{python}", "-u", "{module}/adapter.py", "--config", "{data}/settings.json", "--session", "{session}"],
+  "cwd": "{module}",
+  "settings": {
+    "file": "{app}/state/terminal-modules/logosmind/settings.json",
+    "fields": [
+      {"key": "project_file", "label": "Existing LogosMind project (select logosmind.py)", "type": "file"},
+      {"key": "python", "label": "LogosMind Python interpreter (optional; detected when blank)", "type": "file"}
+    ]
+  },
+  "actions": [
+    {"id": "chat", "label": "Chat", "placeholder": "Ask LogosMind anything...", "button": "Send"},
+    {"id": "bible", "label": "Bible", "placeholder": "Reference, e.g. John 1:14 or Psalm 23", "button": "Look up", "translations": true},
+    {"id": "search", "label": "Search", "placeholder": "Words to find in local sources...", "button": "Search", "translations": true},
+    {"id": "lexicon", "label": "Lexicon", "placeholder": "One verse, e.g. John 1:1", "button": "Look up"},
+    {"id": "modules", "label": "References", "placeholder": "Leave blank to browse reference modules", "button": "Browse", "allow_empty": true}
+  ]
+}
