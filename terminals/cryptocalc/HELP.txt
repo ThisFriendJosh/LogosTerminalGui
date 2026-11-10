@@ -1,0 +1,21 @@
+CryptoCalc runs the original calculator engine locally inside this terminal.
+
+Choose Run operation or recipe, then enter an operation ID, a space, and its input:
+  to_base64 Hello
+  from_base64 SGVsbG8=
+  sha256 abc
+
+Choose Available operations to see all IDs, descriptions and default arguments.
+Filter the list by typing a name such as AES, caesar or base64.
+
+For arguments or multiple steps, paste JSON:
+{"input":"Hello","steps":[{"op":"to_base64"},{"op":"from_base64"}]}
+{"input":"Khoor","steps":[{"op":"caesar","args":{"shift":-3}}]}
+
+Steps use the same operation IDs and args as the original app. Binary results
+are shown as hexadecimal. Open full calculator provides the complete visual
+workbench, file import, cipher busting, charts and exports in your browser.
+
+Requirements: Python 3 and Node.js 22 or newer. No npm packages or network calls.
+Limits in this terminal: 250 KB input, 64 recipe steps, 100,000 result characters,
+30 seconds per calculation. The full calculator retains its original limits.
