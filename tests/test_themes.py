@@ -70,7 +70,7 @@ class ThemeTests(unittest.TestCase):
         self.catalog.custom_root.mkdir(parents=True)
         (self.catalog.custom_root / "broken.theme.json").write_text('{"schema":"new-major/99"}')
         self.catalog.reload()
-        self.assertEqual(set(self.catalog.themes), {"logos-classic", "galactic-phosphor"})
+        self.assertEqual(set(self.catalog.themes), {"logos-classic", "galactic-phosphor", "galactic-2"})
         self.assertEqual(len(self.catalog.errors), 1)
 
     def test_rain_model_remains_bounded_at_large_window_sizes(self):

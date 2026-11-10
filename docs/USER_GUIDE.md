@@ -31,11 +31,13 @@ Use an explicit interpreter in a module's command array when it has its own envi
 
 ## Appearance
 
-Settings offers **Logos Classic**, the original design, and **Galactic Phosphor**, the black/neon-green design with animated galactic code. Choose a theme and Apply; the layout, connected terminals, transcripts and unsent drafts are preserved. Your theme choice is remembered.
+Settings offers **Logos Classic**, the original design, **Galactic Phosphor**, and **Galactic 2.0**. Choose a theme and Apply; the layout, connected terminals, transcripts and unsent drafts are preserved. Your theme choice is remembered.
+
+Galactic 2.0 uses tighter columns, a separate change timer for every symbol, smoother falling positions, bright soft halos and fading after-images. Its rain is quieter behind the transcript so messages stay legible. **Rain settings** adjusts these elements and the frame rate. Save a personal custom theme, then Apply it from Settings. The shipped presets remain available. Lower frame rate, brightness or glow radius if you want a lighter effect on your computer.
 
 Use **Theme elements** to inspect the selected theme by group or as flat named tokens. **Export theme** creates an editable JSON definition. Give a copy a unique id and name, then use **Import theme** to add it to the menu. See [Theme authoring](THEMES.md) for the format.
 
-Settings also adjusts reading font size from 10 to 18. The compact layout keeps the composer visible at 980 x 650, including the largest reading font. Effects turns animated rain, glow variation and cursor blinking off/on; hover feedback remains available. Classic animates at up to 8 Hz and Galactic Phosphor at up to 12 Hz. Ambient animations pause when inactive or minimized. Glyph sprites are shared and the rain field has a fixed size limit; no fonts, graphics packages or online assets need to be installed.
+Settings also adjusts reading font size from 10 to 18. The compact layout keeps the composer visible at 980 x 650, including the largest reading font. Effects turns animated rain, glow variation and cursor blinking off/on; hover feedback remains available. Classic animates at up to 8 Hz, Galactic Phosphor at up to 12 Hz, and Galactic 2.0 targets 24 fps by default. Ambient animations pause when inactive or minimized. Glow masks are cached and the animated texture has fixed size limits; no fonts, graphics packages or online assets need to be installed.
 
 ## Local files
 

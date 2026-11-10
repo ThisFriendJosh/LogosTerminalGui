@@ -181,7 +181,7 @@ class RainCanvas(tk.Canvas):
         dy = self.winfo_rooty()-atmosphere.window.winfo_rooty()
         vx, vy = self.canvasx(0), self.canvasy(0)
         tw, th = atmosphere.field.width, atmosphere.field.height
-        picture = atmosphere.images[self.cget("bg")]
+        picture = atmosphere.images[atmosphere.picture_key(self)]
         visible = set()
         for tx in range(math.floor(dx/tw), math.ceil((dx+width)/tw)):
             for ty in range(math.floor(dy/th), math.ceil((dy+height)/th)):
@@ -217,8 +217,16 @@ class Atmosphere:
     def __init__(self, window, theme):
         self.window = window
         self.theme = theme
-        self.atlas = GlyphAtlas(window, theme.palette["accent"])
-        self.field = RainField()
+        self.glow_raster = None
+        if theme.rain:
+            from galactic_rain import AnimatedRain, GlowRaster, cached_glow_atlas
+            options = theme.rain
+            self.atlas = cached_glow_atlas(SGA, options["glow_radius"], options["glow_strength"], options["brightness"])
+            self.field = AnimatedRain(options)
+            self.glow_raster = GlowRaster(self.atlas)
+        else:
+            self.atlas = GlyphAtlas(window, theme.palette["accent"])
+            self.field = RainField()
         self.layers = []
         self.backgrounds = []
         self.enabled = True
@@ -240,21 +248,41 @@ class Atmosphere:
     def register(self, layer):
         self.layers.append(layer)
 
+    def picture_key(self, layer):
+        background = layer.cget("bg")
+        if self.glow_raster:
+            strength = self.theme.rain["content_brightness"] if getattr(layer, "reading_surface", False) else 1.0
+            return background, strength
+        return background
+
     def tick(self, dt):
         # A bounded tile is shared by every canvas. This keeps raster memory and
         # upload cost fixed on large monitors instead of growing with screen area.
-        width, height = min(960, self.window.winfo_width()), min(720, self.window.winfo_height())
+        max_width, max_height = (768, 480) if self.glow_raster else (960, 720)
+        width, height = min(max_width, self.window.winfo_width()), min(max_height, self.window.winfo_height())
         self.field.resize(width, height)
         self.field.advance(dt)
+        if self.glow_raster:
+            self.glow_raster.prepare(self.field.cells if self.theme.effects["digital_rain"] else (), width, height,
+                                     self.theme.effects["scanlines"])
         self.backgrounds = [(p, layer) for p, layer in self.backgrounds if p.winfo_exists() and layer.winfo_exists()]
         self.layers = [layer for layer in self.layers if layer.winfo_exists()]
-        backgrounds = {layer.cget("bg") for layer in self.layers if layer.winfo_ismapped()}
+        backgrounds = {self.picture_key(layer) for layer in self.layers if layer.winfo_ismapped()}
         for background in backgrounds:
-            self._raster(background, width, height)
+            if self.glow_raster:
+                self._raster(background[0], width, height, strength=background[1])
+            else:
+                self._raster(background, width, height)
         for layer in self.layers:
             layer.paint(self)
 
-    def _raster(self, background, width, height):
+    def _raster(self, background, width, height, strength=1.0):
+        if self.glow_raster:
+            key = background, strength
+            if key not in self.images:
+                self.images[key] = tk.PhotoImage(master=self.window)
+            self.images[key].configure(data=self.glow_raster.image_bytes(background, self.theme.palette["accent"], strength), format="PNG")
+            return
         key = background, width, height
         if key not in self.bases:
             base = bytes(int(background[i:i+2], 16) for i in (1, 3, 5))
@@ -342,6 +370,7 @@ class PhosphorText(tk.Text):
         self._fonts = {}
         super().__init__(parent, **kwargs)
         self.screen = RainCanvas(self, cursor="xterm", takefocus=0)
+        self.screen.reading_surface = True
         self.screen.place(x=0, y=0, relwidth=1, relheight=1)
         self.anchor = None
         self.cursor_item = None

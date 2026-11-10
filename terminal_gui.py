@@ -17,7 +17,7 @@ import uuid
 
 from terminal_core import ANSI, TerminalModule, TerminalProcess, console_python, discover, read_preferences, write_preferences
 from terminal_protocol import API_VERSION, HOST_VERSION
-from terminal_themes import ThemeCatalog
+from terminal_themes import RAIN_LIMITS, ThemeCatalog
 from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
 
 ROOT = Path(__file__).resolve().parent
@@ -216,6 +216,8 @@ class TerminalGUI:
         self.panels, self.module_buttons, self.action_buttons = [], {}, {}
         self.closing = False
         self.last_animation = time.monotonic()
+        self.last_lighting = self.last_native_border = 0.0
+        self.animation_was_active = False
         self.metrics = {"animation_ticks": 0, "poll_cycles": 0}
         root.title("Logos Terminal — Modular Workspace")
         root.geometry("1320x850")
@@ -896,6 +898,7 @@ class TerminalGUI:
             describe()
         def describe(event=None):
             description.configure(text=themes[theme_choice.get()].data["description"])
+            rain_button.configure_state(enabled=bool(themes[theme_choice.get()].rain))
         choice.bind("<<ComboboxSelected>>", describe)
         def import_theme():
             path = filedialog.askopenfilename(parent=dialog, title="Import a theme definition", filetypes=[("Theme definition", "*.json")])
@@ -910,6 +913,9 @@ class TerminalGUI:
         NeonButton(tools, "Theme elements", lambda: self.inspect_theme(themes[theme_choice.get()]), width=156, small=True).pack(side="left")
         NeonButton(tools, "Import theme", import_theme, width=140, small=True).pack(side="left", padx=8)
         NeonButton(tools, "Export theme", lambda: self.export_theme(themes[theme_choice.get()], dialog), width=140, small=True).pack(side="left")
+        rain_button = NeonButton(tools, "Rain settings", lambda: self.rain_settings(themes[theme_choice.get()],
+            lambda saved: refresh_themes(saved.id)), width=140, small=True)
+        rain_button.pack(side="left", padx=(8, 0))
         refresh_themes(self.theme_catalog.selected(self.theme.id).id)
         effects = tk.BooleanVar(value=self.preferences["effects"])
         tk.Checkbutton(body, text="Enable this theme's animated effects", variable=effects, bg=BG, fg=TEXT, activebackground=BG, activeforeground=GREEN,
@@ -933,6 +939,45 @@ class TerminalGUI:
                 messagebox.showerror("Check settings", str(exc), parent=dialog)
         NeonButton(row, "Apply", apply, width=110, primary=True).pack(side="right")
 
+    def rain_settings(self, theme, on_saved):
+        if not theme.rain:
+            return
+        dialog = self.dialog(theme.name+" - Rain settings", "760x620")
+        self.label(dialog, "RAIN SETTINGS", GREEN, 16, True).pack(anchor="w", padx=24, pady=(20, 8))
+        self.label(dialog, "Save a personal theme, then choose Apply in Settings to use it.", MUTED, 10).pack(anchor="w", padx=24)
+        fields = tk.Frame(dialog, bg=BG)
+        fields.pack(fill="both", expand=True, padx=24, pady=18)
+        fields.columnconfigure(0, weight=1)
+        fields.columnconfigure(1, weight=1)
+        labels = {"column_spacing": "Column spacing (pixels)", "row_spacing": "Row spacing (pixels)",
+                  "fall_speed": "Fall speed (pixels/second)", "morph_rate": "Symbol changes per second",
+                  "brightness": "Character brightness", "content_brightness": "Rain behind text (brightness)", "glow_radius": "Soft glow radius (pixels)",
+                  "glow_strength": "Soft glow strength", "trail_seconds": "After-image fade (seconds)",
+                  "frame_rate": "Animation frames per second"}
+        values = {}
+        for index, (key, (low, high)) in enumerate({**RAIN_LIMITS, "frame_rate": (4, 30)}.items()):
+            cell = tk.Frame(fields, bg=BG)
+            cell.grid(row=index//2, column=index % 2, sticky="ew", padx=(0, 18), pady=(0, 14))
+            self.label(cell, labels[key], MUTED, 10).pack(anchor="w", pady=(0, 6))
+            variable = tk.StringVar(value=str(theme.effects[key] if key == "frame_rate" else theme.rain[key]))
+            values[key] = variable
+            step = .05 if key in {"brightness", "content_brightness", "glow_strength", "trail_seconds"} else 1
+            tk.Spinbox(cell, from_=low, to=high, increment=step, textvariable=variable, bg=FIELD, fg=TEXT,
+                       buttonbackground=EDGE, insertbackground=GREEN, font=(FONT_FAMILY, 11),
+                       highlightthickness=1, highlightbackground=EDGE, relief="flat", width=22).pack(fill="x", ipady=6)
+        bottom = tk.Frame(dialog, bg=BG)
+        bottom.pack(fill="x", padx=24, pady=(0, 20))
+        def save():
+            try:
+                changed = {key: int(values[key].get()) if key == "glow_radius" else float(values[key].get()) for key in RAIN_LIMITS}
+                saved = self.theme_catalog.customize_rain(theme, changed, frame_rate=int(values["frame_rate"].get()))
+                on_saved(saved)
+                dialog.destroy()
+            except (OSError, ValueError, TypeError) as exc:
+                messagebox.showerror("Check rain settings", str(exc), parent=dialog)
+        NeonButton(bottom, "Save custom theme", save, width=196, primary=True).pack(side="right")
+        return dialog
+
     def export_theme(self, theme, parent=None):
         path = filedialog.asksaveasfilename(parent=parent or self.window, title="Export theme definition",
             initialfile=theme.id+".theme.json", defaultextension=".json", filetypes=[("Theme definition", "*.json")])
@@ -949,7 +994,7 @@ class TerminalGUI:
         row = tk.Frame(dialog, bg=BG)
         row.pack(fill="x", padx=22, pady=13)
         group = tk.StringVar(value="All elements")
-        options = {"All elements": None, "Palette": "palette", "Typography": "typography", "Components": "components", "Effects": "effects", "Flat tokens": "tokens"}
+        options = {"All elements": None, "Palette": "palette", "Typography": "typography", "Components": "components", "Effects": "effects", "Rain": "rain", "Flat tokens": "tokens"}
         selector = ttk.Combobox(row, textvariable=group, values=list(options), state="readonly", width=22, font=(FONT_FAMILY, 10))
         selector.pack(side="left")
         text = tk.Text(dialog, bg=FIELD, fg=TEXT, font=(FONT_FAMILY, 11), wrap="word", bd=0, padx=12, pady=12)
@@ -1095,7 +1140,8 @@ class TerminalGUI:
         if enabled:
             self.metrics["animation_ticks"] += 1
             phase = (math.sin(now * 1.2) + 1) / 2
-            if self.theme.effects["pulse"]:
+            if self.theme.effects["pulse"] and (not self.theme.rain or now-self.last_lighting >= .125):
+                self.last_lighting = now
                 color = mix(EDGE, PALETTE["border_glow"], .15 + phase*.3)
                 for panel in self.panels:
                     panel.configure(highlightbackground=color)
@@ -1103,13 +1149,19 @@ class TerminalGUI:
                 self.window.terminal_buttons[:] = [b for b in self.window.terminal_buttons if b.winfo_exists()]
                 for button in self.window.terminal_buttons:
                     button.set_pulse(phase)
-                if self.metrics["animation_ticks"] % 4 == 0:
+                if now-self.last_native_border >= .4:
+                    self.last_native_border = now
                     native_frame(self.window, color)
             if self.atmosphere:
-                self.atmosphere.tick(now-self.last_animation)
+                self.atmosphere.tick(now-self.last_animation if self.animation_was_active else 0)
         self.transcript.pulse_cursor(now, enabled and self.theme.effects["block_cursor"])
         self.last_animation = now
-        self.window.after(round(1000/self.theme.effects["frame_rate"]) if enabled else 500, self.animate)
+        self.animation_was_active = enabled
+        interval = 1000/self.theme.effects["frame_rate"]
+        if enabled and self.theme.rain:
+            # Account for rendering time instead of adding it to every interval.
+            interval = max(1, interval-(time.monotonic()-now)*1000)
+        self.window.after(round(interval) if enabled else 500, self.animate)
 
     def save(self):
         try:

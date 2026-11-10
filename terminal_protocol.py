@@ -8,7 +8,7 @@ import re
 import sys
 
 API_VERSION = "1.0.0"
-HOST_VERSION = "1.1.0"
+HOST_VERSION = "1.2.0"
 MAX_LINE_BYTES = 2_000_000
 
 

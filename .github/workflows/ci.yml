@@ -30,4 +30,4 @@ jobs:
         if: runner.os == 'Linux'
         run: xvfb-run -a python -m unittest -v tests.test_gui_layout
       - name: Check source compilation
-        run: python -m compileall -q terminal_gui.py terminal_core.py terminal_protocol.py terminal_themes.py terminal_visuals.py validate_terminal.py terminals terminal_sdk tools
+        run: python -m compileall -q terminal_gui.py terminal_core.py terminal_protocol.py terminal_themes.py terminal_visuals.py galactic_rain.py validate_terminal.py terminals terminal_sdk tools

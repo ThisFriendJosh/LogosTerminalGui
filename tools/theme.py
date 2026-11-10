@@ -13,7 +13,7 @@ def main():
     parser.add_argument("command", choices=("validate", "inspect"))
     parser.add_argument("path", type=Path)
     display = parser.add_mutually_exclusive_group()
-    display.add_argument("--group", choices=("palette", "typography", "components", "effects"))
+    display.add_argument("--group", choices=("palette", "typography", "components", "effects", "rain"))
     display.add_argument("--flat", action="store_true", help="Print stable dotted element names")
     args = parser.parse_args()
     try:

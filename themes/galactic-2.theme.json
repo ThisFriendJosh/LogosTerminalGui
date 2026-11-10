@@ -1,0 +1,63 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "galactic-2",
+  "name": "Galactic 2.0",
+  "version": "2.0.0",
+  "description": "Denser living galactic code: independent symbol changes, smoother falling, bright soft phosphor halos and fading trails. Same workspace layout.",
+  "palette": {
+    "background": "#000000",
+    "panel": "#000000",
+    "field": "#000000",
+    "accent": "#00ff41",
+    "accent_bright": "#78ff9b",
+    "text": "#00ed3d",
+    "muted": "#179b3d",
+    "edge": "#075c24",
+    "error": "#78ff9b",
+    "selection": "#075e24",
+    "selection_text": "#78ff9b",
+    "code_background": "#001a08",
+    "placeholder": "#08752a",
+    "disabled": "#075321",
+    "button_fill": "#00280c",
+    "button_disabled": "#063419",
+    "footer": "#0c8131",
+    "user": "#00ed3d",
+    "border_glow": "#00ff41",
+    "brand": "#00ff41"
+  },
+  "typography": {
+    "families": [
+      "Consolas",
+      "DejaVu Sans Mono",
+      "Liberation Mono",
+      "Courier"
+    ]
+  },
+  "components": {
+    "button_style": "phosphor",
+    "module_icons": true,
+    "terminal_prompts": true
+  },
+  "effects": {
+    "digital_rain": true,
+    "text_glow": true,
+    "scanlines": true,
+    "pulse": true,
+    "block_cursor": true,
+    "frame_rate": 24
+  },
+  "min_host_version": "1.2.0",
+  "rain": {
+    "column_spacing": 16,
+    "row_spacing": 24,
+    "fall_speed": 42,
+    "morph_rate": 7,
+    "brightness": 1.0,
+    "content_brightness": 0.55,
+    "glow_radius": 4,
+    "glow_strength": 1.15,
+    "trail_seconds": 0.36
+  }
+}

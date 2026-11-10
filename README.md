@@ -2,7 +2,7 @@
 
 A lightweight desktop host for modular terminals. Load a terminal, switch workspaces, and use the controls supplied by that module. The GUI stays independent of AI models and their environments.
 
-Choose **Logos Classic** (the original design) or **Galactic Phosphor** in Settings. Both use the same modular workspace layout. Galactic Phosphor adds pure black and neon green, luminous vector icons, cascading galactic glyphs, soft text glow and block cursors. The host uses Python/Tk and the standard library, with no third-party runtime packages.
+Choose **Logos Classic** (the original design), **Galactic Phosphor**, or **Galactic 2.0** in Settings. All use the same modular workspace layout. Galactic 2.0 adds denser columns, independently changing symbols, smoother falling, soft phosphor halos and fading after-images. The host uses Python/Tk and the standard library, with no third-party runtime packages.
 
 ## Run
 
@@ -76,12 +76,15 @@ Open **Settings**, choose a theme, and click **Apply**. Switching preserves load
 
 **Theme elements** shows the selected theme's parsed palette, typography, component styles, effects, or flat named tokens. **Export theme** saves a reusable definition; **Import theme** validates and installs another definition. Themes are versioned JSON data. They cannot execute scripts or change the module protocol or workspace layout.
 
+For Galactic 2.0, **Rain settings** adjusts column/row spacing, fall speed, symbol-change rate, brightness, glow, after-images and frame rate. Saving creates a personal custom theme; Apply selects it without modifying the bundled preset. The default targets 24 fps, supports up to 30, and dims the rain behind transcript text for readability. Effects pauses all ambient animation when disabled or when the app is inactive.
+
 To create another theme, export one, change its `id` and `name`, edit its elements, then import it. Bundled definitions live in [themes/](themes/); imported definitions are local settings. See the [theme authoring guide](docs/THEMES.md) and [theme schema](themes/theme.schema.json).
 
 ```sh
 python tools/theme.py validate themes/galactic-phosphor.theme.json
 python tools/theme.py inspect themes/galactic-phosphor.theme.json --group palette
 python tools/theme.py inspect themes/galactic-phosphor.theme.json --flat
+python tools/theme.py inspect themes/galactic-2.theme.json --group rain
 ```
 
 ## Development

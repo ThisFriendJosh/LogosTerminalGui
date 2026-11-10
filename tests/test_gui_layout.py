@@ -43,7 +43,7 @@ class LayoutTests(unittest.TestCase):
             app.preferences["effects"] = False
             app.update_effect_label()
             try:
-                for theme in ("logos-classic", "galactic-phosphor", "logos-classic"):
+                for theme in ("logos-classic", "galactic-phosphor", "galactic-2", "logos-classic"):
                     app.apply_theme(theme)
                     for width, height, font_size in [(1320, 850, 12), (980, 650, 12), (980, 650, 18)]:
                       with self.subTest(theme=theme, width=width, height=height, font_size=font_size):
@@ -100,7 +100,7 @@ class LayoutTests(unittest.TestCase):
                 app.input.insert("1.0", "Unsent draft\nsecond line")
                 pump(window)
                 geometry = [(w.winfo_x(), w.winfo_y(), w.winfo_width(), w.winfo_height()) for w in (app.sidebar, app.input, app.transcript, app.send_button)]
-                for theme in ("galactic-phosphor", "logos-classic", "galactic-phosphor"):
+                for theme in ("galactic-phosphor", "galactic-2", "logos-classic", "galactic-2"):
                     app.apply_theme(theme)
                     pump(window)
                     self.assertEqual(app.input_text(), "Unsent draft\nsecond line")
@@ -135,6 +135,24 @@ class LayoutTests(unittest.TestCase):
                     self.assertLessEqual(button.winfo_rooty()+button.winfo_height(), inspector.winfo_rooty()+inspector.winfo_height())
                 inspector.destroy()
                 dialog.destroy()
+                saved = []
+                editor = app.rain_settings(app.theme, saved.append)
+                pump(window)
+                controls = [w for w in children(editor) if isinstance(w, tk.Spinbox)]
+                self.assertEqual(len(controls), 10)
+                for control in controls:
+                    self.assertTrue(control.winfo_ismapped())
+                controls[0].delete(0, "end")
+                controls[0].insert(0, "14")
+                save = next(w for w in children(editor) if getattr(w, "label", "") == "Save custom theme")
+                self.assertLessEqual(save.winfo_rooty()+save.winfo_height(), editor.winfo_rooty()+editor.winfo_height())
+                save.invoke()
+                self.assertEqual(len(saved), 1)
+                self.assertEqual(saved[0].rain["column_spacing"], 14)
+                app.apply_theme(saved[0].id)
+                pump(window)
+                self.assertEqual(app.input_text(), "Unsent draft\nsecond line")
+                self.assertIsNone(process.process.poll())
             finally:
                 app.closing = True
                 for process in list(app.processes.values()):
