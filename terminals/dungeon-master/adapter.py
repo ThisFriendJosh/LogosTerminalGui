@@ -27,7 +27,7 @@ def command_for(config, data, session, defaults=None):
         raise ValueError("Dungeon Master settings must be a JSON object")
     defaults = installed_paths() if defaults is None else defaults
     paths = {}
-    for key, label in (("worker", "Dungeon World terminal worker"), ("server", "llama-server executable"), ("model", "GGUF model")):
+    for key, label in (("worker", "Dungeon World terminal worker (dwa-terminal)"), ("server", "llama-server executable"), ("model", "GGUF model")):
         value = config.get(key) or defaults.get(key)
         if not isinstance(value, (str, Path)) or not str(value).strip():
             raise ValueError("Select the "+label+" in this terminal's Settings")

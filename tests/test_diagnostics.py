@@ -100,6 +100,11 @@ class DiagnosticTests(unittest.TestCase):
         self.assertIn("$HOST", encoded)
         self.assertNotIn("sensitive-config-value", redact("value=sensitive-config-value", secrets=["sensitive-config-value"]))
 
+    def test_report_works_when_the_launcher_has_no_home_directory(self):
+        with patch("terminal_diagnostics.Path.home", side_effect=RuntimeError("No home")):
+            report = build_report({self.module.id: self.module}, self.root, {}, {}, {})
+        self.assertEqual(report["schema"], "logos-terminal-diagnostics/1")
+
     def test_module_order_and_unloaded_ids_survive_preferences_reload(self):
         path = self.root/"preferences.json"
         write_preferences(path, {"module_order": ["b", "a", "b"], "hidden_modules": ["example-echo", None], "sessions": {"a": "keep-this-session"}})

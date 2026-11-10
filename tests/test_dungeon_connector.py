@@ -49,6 +49,10 @@ class DungeonConnectorTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.adapter.command_for({"gpu_layers": value}, self.root, "s", self.files)
 
+    def test_missing_platform_defaults_name_the_required_worker(self):
+        with self.assertRaisesRegex(ValueError, "dwa-terminal"):
+            self.adapter.command_for({}, self.root, "s", {})
+
     def test_unconfigured_connector_reports_setup_problem_without_a_model(self):
         events = queue.Queue()
         process = TerminalProcess(TerminalModule.load(ROOT/"terminals/dungeon-master/terminal.json"), ROOT, "test", events)
@@ -62,7 +66,7 @@ class DungeonConnectorTests(unittest.TestCase):
             if event["event"] == "ready":
                 break
         self.assertFalse(event["model_available"])
-        self.assertIn("dwa-terminal.exe", event["connection_error"])
+        self.assertIn("dwa-terminal", event["connection_error"])
         self.assertIn("roll", event["capabilities"])
         identifier = process.send("chat", "test action")
         while True:

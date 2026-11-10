@@ -168,7 +168,11 @@ def redact(text, roots=(), secrets=()):
 def build_report(modules, root, processes, states, records, *, selected=None, include_details=False, tk_version=""):
     """Allowlist default fields; never serialize commands, settings or workspaces."""
     root = Path(root).resolve()
-    roots = [(root, "$HOST"), (Path.home(), "$HOME")]
+    roots = [(root, "$HOST")]
+    try:
+        roots.append((Path.home(), "$HOME"))
+    except RuntimeError:
+        pass  # Minimal launch/test environments may not expose a home folder.
     secrets = []
     for module in modules.values():
         roots.append((module.path.parent, "$MODULE:"+module.id))
