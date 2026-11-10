@@ -10,7 +10,7 @@ Filter the list by typing a name such as AES, caesar or base64.
 
 For arguments or multiple steps, paste JSON:
 {"input":"Hello","steps":[{"op":"to_base64"},{"op":"from_base64"}]}
-{"input":"Khoor","steps":[{"op":"caesar","args":{"shift":-3}}]}
+{"input":"Khoor","steps":[{"op":"caesar_decode","args":{"shift":3}}]}
 
 Steps use the same operation IDs and args as the original app. Binary results
 are shown as hexadecimal. Open full calculator provides the complete visual

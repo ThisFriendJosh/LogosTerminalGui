@@ -56,13 +56,15 @@ class CalculatorEngineTests(unittest.TestCase):
         recipe = json.dumps({"input": "Hello \u03bb", "steps": [{"op": "to_base64"}, {"op": "from_base64"}]})
         replies = self.exchange("cryptocalc", [("run", "to_base64 Hello"), ("run", recipe),
             ("run", "sha256 abc"), ("run", "does_not_exist text"), ("run", "from_base64 SGVsbG8="),
-            ("operations", "base64")])
+            ("operations", "base64"), ("run", json.dumps({"input": "Khoor", "steps": [
+                {"op": "caesar_decode", "args": {"shift": 3}}]}))])
         self.assertTrue(replies[0]["result"]["text"].startswith("SGVsbG8="))
         self.assertTrue(replies[1]["result"]["text"].startswith("Hello \u03bb"))
         self.assertIn(hashlib.sha256(b"abc").hexdigest(), replies[2]["result"]["text"])
         self.assertEqual(replies[3]["error"]["code"], -32602)
         self.assertTrue(replies[4]["result"]["text"].startswith("Hello"))
         self.assertIn("from_base64", replies[5]["result"]["text"])
+        self.assertTrue(replies[6]["result"]["text"].startswith("Hello"))
 
     def test_numeric_summary_intervals_and_linear_correlation(self):
         replies = self.exchange("statcalc", [("json", "1,2,3,4,5"),
