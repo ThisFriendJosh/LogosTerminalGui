@@ -55,7 +55,7 @@ def command_for(config, session):
 
 def configuration_notice(message):
     channel = Channel()
-    channel.emit("ready", model="LogosMind - connection needs setup", model_available=False)
+    channel.emit("ready", model="LogosMind - connection needs setup", model_available=False, connection_error=str(message))
     for line in sys.stdin:
         identifier = None
         try:

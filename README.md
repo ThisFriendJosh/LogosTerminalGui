@@ -70,6 +70,14 @@ Enter sends; Shift+Enter adds a line; Ctrl+L focuses input. New/History are enab
 
 The host remembers module paths, sessions, font size, and effects in ignored `state/` files. Notes and connector configuration use separate module data folders. Ambient lighting pauses while the window is inactive. See the [user guide](docs/USER_GUIDE.md).
 
+## Terminal Manager and beta diagnostics
+
+Open **Settings > Terminal Manager** to see each module's version, protocol, connection status, launch interpreter/program and configured file paths. Open its workspace or settings, validate its current files, test its connection, reconnect, change sidebar order, or unload it. Order and unloaded entries are remembered. Load the original manifest again to restore an unloaded terminal; its files, settings and saved conversations remain.
+
+**Validate files** performs static checks without running the module. **Test connection** reuses a running connection or starts a disconnected terminal through the normal host connection. It checks the startup handshake and advertised actions without sending a chat/tool request. The terminal stays connected. Text adapters can report a running process but have no API handshake. Startup checks do not certify inference quality or every backend tool.
+
+**Export report** opens a JSON preview before saving. The default report contains technical versions, connection states, manifest fingerprints and check results. It excludes conversations, drafts, commands, settings values and raw diagnostic text. Optionally include recent diagnostics, with known paths/common credentials redacted; review other text before sharing. Nothing is uploaded automatically. See the [testing guide](docs/TESTING.md).
+
 ## Themes
 
 Open **Settings**, choose a theme, and click **Apply**. Switching preserves loaded modules, running connections, transcripts and drafts. Existing installations default to the original Logos Classic design.

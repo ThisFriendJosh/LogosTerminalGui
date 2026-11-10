@@ -85,6 +85,7 @@ knowledge/
 source/original_yaml/
 runs/
 exports/
+logos-terminal-diagnostics-*.json
 machine.local.json
 .env
 .env.*

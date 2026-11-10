@@ -29,6 +29,19 @@ Load terminal > Link an existing terminal registers a normal redirected-input/ou
 
 Use an explicit interpreter in a module's command array when it has its own environment. Keeping dependencies in that environment prevents the host and modules from changing each other's installed packages.
 
+## Manage and check terminals
+
+Open **Settings > Terminal Manager**. Selecting a row inspects that terminal without changing your active workspace. **Open workspace** switches to it; **Settings** opens that selected module's configuration. The details show module/API versions, launch interpreter or program, working folder, settings file, and configured file paths. For a connector, these include the separately configured backend project and interpreter; an automatic interpreter is resolved by that connector.
+
+- **Validate files** checks the current manifest, API compatibility, launch program, Python entry script and configured files without running code. If a loaded manifest changes, unload it and load the updated definition.
+- **Test connection** starts a disconnected module or reuses its existing worker. It verifies the startup handshake and declared actions, sending no chat or tool command. It leaves the terminal connected. A text adapter has no capability handshake; a running text process is reported separately. Backend initialization may load its model or restore its normal session.
+- **Reconnect** waits for the old owned worker to stop, then reconnects with the same session. Drafts and the host's visible transcript remain; a backend may refresh its saved history. Reconnect and Unload are disabled during a request or startup.
+- **Move up / Move down** changes the sidebar order and remembers it.
+- **Unload** stops the worker and removes the entry. It leaves the manifest, settings, saved conversations and notes in place. Load the same manifest again to restore it. In-memory drafts remain available when reloading during the same app session.
+- **Export report** previews and saves diagnostic JSON for your tester to send back. The default excludes conversations, drafts, settings values and raw logs. Optional diagnostic text redacts known paths and common credentials; review it before sharing. Export does not upload the file.
+
+See [Beta testing and diagnostics](TESTING.md) for a short tester workflow and the limits of connection checks.
+
 ## Appearance
 
 Settings offers **Logos Classic**, the original design, **Galactic Phosphor**, and **Galactic 2.0**. Choose a theme and Apply; the layout, connected terminals, transcripts and unsent drafts are preserved. Your theme choice is remembered.

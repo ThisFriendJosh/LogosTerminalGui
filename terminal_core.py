@@ -37,6 +37,9 @@ class TerminalModule:
     protocol: str
     actions: list[dict]
     settings: dict
+    version: str = "1.0.0"
+    api_version: str = API_VERSION
+    min_host_version: str = "1.0.0"
 
     @classmethod
     def load(cls, path):
@@ -106,7 +109,15 @@ class TerminalModule:
                     if bound in field and (isinstance(field[bound], bool) or not isinstance(field[bound], (int, float))):
                         raise ValueError("Numeric setting bounds must be numbers")
         return cls(path, identifier, name, str(data.get("description", ""))[:300], command,
-                   str(data.get("cwd", "{module}")), protocol, actions, settings)
+                   str(data.get("cwd", "{module}")), protocol, actions, settings,
+                   data["version"], data["api_version"], data["min_host_version"])
+
+    def settings_path(self, app_root):
+        if not self.settings:
+            return None
+        target = self.settings["file"].replace("{app}", str(Path(app_root).resolve())).replace("{module}", str(self.path.parent))
+        path = Path(os.path.expandvars(target))
+        return path if path.is_absolute() else self.path.parent / path
 
     def launch(self, app_root, session):
         values = {"{python}": console_python(), "{app}": str(Path(app_root).resolve()),
@@ -150,7 +161,8 @@ def discover(root, extra_paths=()):
 
 
 def read_preferences(path):
-    defaults = {"effects": True, "font_size": 12, "modules": [], "sessions": {}, "selected": "scratchpad", "theme": "logos-classic"}
+    defaults = {"effects": True, "font_size": 12, "modules": [], "sessions": {}, "selected": "scratchpad", "theme": "logos-classic",
+                "module_order": [], "hidden_modules": []}
     try:
         saved = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(saved, dict):
@@ -163,6 +175,9 @@ def read_preferences(path):
             pass
         if isinstance(saved.get("modules"), list):
             defaults["modules"] = [p for p in saved["modules"] if isinstance(p, str)][:128]
+        for key in ("module_order", "hidden_modules"):
+            if isinstance(saved.get(key), list):
+                defaults[key] = list(dict.fromkeys(p for p in saved[key] if isinstance(p, str) and re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,63}", p)))[:256]
         if isinstance(saved.get("sessions"), dict):
             defaults["sessions"] = {k: v for k, v in saved["sessions"].items() if isinstance(k, str) and isinstance(v, str) and 0 < len(v) <= 100}
         if isinstance(saved.get("selected"), str):
@@ -191,6 +206,7 @@ class TerminalProcess:
         self.stopping = False
         self.initialize_id = "initialize-" + uuid.uuid4().hex
         self.initialized = False
+        self.metadata, self.capabilities, self.server_info = {}, [], {}
         self.before_initialize = []
         self.pending_ids = set()
         self.lifecycle_lock = threading.Lock()
@@ -252,8 +268,11 @@ class TerminalProcess:
                     missing = {a["id"] for a in self.module.actions} - set(supported)
                     if missing:
                         raise ValueError("Module did not advertise its declared actions: " + ", ".join(sorted(missing)))
+                    self.metadata = validate_payload(result.get("metadata", {}))
+                    self.capabilities = supported
+                    self.server_info = result.get("serverInfo", {}) if isinstance(result.get("serverInfo"), dict) else {}
                     self.initialized = True
-                    self.emit({**validate_payload(result.get("metadata", {})), "event": "ready", "capabilities": supported})
+                    self.emit({**self.metadata, "event": "ready", "capabilities": supported})
                     for event in self.before_initialize:
                         self.emit(event)
                     self.before_initialize.clear()
@@ -347,8 +366,12 @@ class TerminalProcess:
                 pass
         else:
             import signal
-            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass  # The worker may exit naturally between wait() and killpg().
         try:
             process.wait(timeout=3)
         except subprocess.TimeoutExpired:
             process.kill()
+            process.wait(timeout=3)

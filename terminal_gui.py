@@ -16,6 +16,7 @@ from tkinter import filedialog, font as tkfont, messagebox, ttk
 import uuid
 
 from terminal_core import ANSI, TerminalModule, TerminalProcess, console_python, discover, read_preferences, write_preferences
+from terminal_diagnostics import check, finish_connection_check, preflight
 from terminal_protocol import API_VERSION, HOST_VERSION
 from terminal_themes import RAIN_LIMITS, ThemeCatalog
 from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
@@ -211,7 +212,13 @@ class TerminalGUI:
         root.terminal_buttons = []
         self.atmosphere = None
         self.modules, errors = discover(self.root, self.preferences["modules"])
+        order = self.preferences["module_order"]
+        self.modules = dict(sorted(((i, m) for i, m in self.modules.items() if i not in self.preferences["hidden_modules"]),
+                                   key=lambda item: order.index(item[0]) if item[0] in order else len(order)))
         self.events, self.processes, self.workspaces = queue.Queue(), {}, {}
+        self.management_events = queue.Queue()
+        self.stopping_processes, self.reconnecting, self.connection_checks = {}, {}, {}
+        self.manager = None
         self.current = None
         self.panels, self.module_buttons, self.action_buttons = [], {}, {}
         self.closing = False
@@ -233,6 +240,8 @@ class TerminalGUI:
         selected = self.preferences.get("selected")
         if self.modules:
             self.select_module(selected if selected in self.modules else next(iter(self.modules)))
+        else:
+            self.empty_workspace()
         self.setup_atmosphere()
         for error in errors + self.theme_catalog.errors:
             self.show_system(error, "error")
@@ -424,6 +433,121 @@ class TerminalGUI:
         if not self.modules:
             self.label(self.module_list, "No modules loaded.\nUse Load terminal below.", MUTED, 10, justify="left").pack(padx=9, pady=10)
 
+    def empty_workspace(self):
+        self.current = None
+        self.title.configure(text="YOUR TERMINAL WORKSPACE")
+        self.subtitle.configure(text="Load a terminal to get started.")
+        for child in self.toolbar.winfo_children():
+            child.destroy()
+        self.action_buttons.clear()
+        self.input.delete("1.0", "end")
+        self.placeholder = False
+        self.input_label.configure(text="INPUT")
+        self.translation_box.pack_forget()
+        self.transcript.configure(state="normal")
+        self.transcript.delete("1.0", "end")
+        self.transcript.insert("end", "\nLoad a terminal to begin.\n", "welcome")
+        self.transcript.configure(state="disabled")
+        self.refresh_controls()
+
+    def terminal_manager(self):
+        from terminal_manager import TerminalManager
+        if self.manager and self.manager.dialog.winfo_exists():
+            self.manager.dialog.lift()
+            return self.manager
+        self.manager = TerminalManager(self, NeonButton, {"bg": BG, "field": FIELD, "text": TEXT, "muted": MUTED,
+                                                        "green": GREEN, "edge": EDGE, "selection": PALETTE["selection"], "font": FONT_FAMILY})
+        return self.manager
+
+    def move_module(self, identifier, direction):
+        order = list(self.modules)
+        index = order.index(identifier)
+        target = index+direction
+        if not 0 <= target < len(order):
+            return
+        order[index], order[target] = order[target], order[index]
+        self.modules = {i: self.modules[i] for i in order}
+        self.preferences["module_order"] = order
+        self.draw_modules()
+        for i, button in self.module_buttons.items():
+            button.configure_state(active=i == self.current)
+        self.save()
+
+    def unload_module(self, identifier):
+        module = self.modules[identifier]
+        if identifier == self.current:
+            self.workspace()["input"] = self.input_text()
+        self.reconnecting.pop(identifier, None)
+        self.stop(identifier)
+        self.connection_checks.pop(identifier, None)
+        del self.modules[identifier]
+        self.preferences["modules"] = [p for p in self.preferences["modules"] if Path(p).resolve() != module.path]
+        if identifier not in self.preferences["hidden_modules"]:
+            self.preferences["hidden_modules"].append(identifier)
+        self.preferences["module_order"] = list(self.modules)
+        if identifier == self.current:
+            self.current = None
+            if self.modules:
+                self.select_module(next(iter(self.modules)))
+            else:
+                self.preferences["selected"] = ""
+                self.empty_workspace()
+        self.draw_modules()
+        for i, button in self.module_buttons.items():
+            button.configure_state(active=i == self.current)
+        self.save()
+
+    def reconnect_module(self, identifier):
+        if identifier not in self.modules or identifier in self.reconnecting:
+            return
+        state = self.workspace(identifier)
+        process = self.processes.get(identifier)
+        if state["busy"] or (process and not state["ready"]):
+            return
+        if not process:
+            self.connect(identifier)
+            return
+        self.reconnecting[identifier] = process.generation
+        self.stop(identifier)
+        state["status"] = "Reconnecting..."
+
+    def validate_module(self, identifier):
+        record = {"status": "validated", "started": time.monotonic(), "elapsed_seconds": 0,
+                  "checks": preflight(self.modules[identifier], self.root)}
+        if any(c["status"] == "fail" for c in record["checks"]):
+            record["status"] = "failed"
+        self.connection_checks[identifier] = record
+        return record
+
+    def test_connection(self, identifier):
+        previous = self.connection_checks.get(identifier)
+        if identifier in self.reconnecting or (previous and previous["status"] == "checking"):
+            return previous
+        record = self.validate_module(identifier)
+        if record["status"] == "failed":
+            return record
+        record["status"] = "checking"
+        if identifier not in self.processes:
+            self.connect(identifier)
+        record["generation"] = self.processes[identifier].generation if identifier in self.processes else None
+        self.advance_connection_checks()
+        return record
+
+    def advance_connection_checks(self):
+        for identifier, record in list(self.connection_checks.items()):
+            if record["status"] != "checking" or identifier not in self.modules:
+                continue
+            if identifier in self.reconnecting and time.monotonic()-record["started"] < 30:
+                continue
+            process, state = self.processes.get(identifier), self.workspace(identifier)
+            if process and record.get("generation") is None:
+                record["generation"] = process.generation
+            if not process or process.generation != record.get("generation") or state["ready"]:
+                finish_connection_check(record, self.modules[identifier], process, state)
+            elif time.monotonic()-record["started"] >= 30:
+                record["checks"].append(check("handshake", "fail", "Startup exceeded the 30-second compatibility limit.", state.get("last_error", "Check Logs, then reconnect.")))
+                record.update(status="failed", elapsed_seconds=round(time.monotonic()-record["started"], 2))
+
     def select_module(self, identifier):
         if self.current:
             self.workspace()["input"] = self.input_text()
@@ -613,14 +737,20 @@ class TerminalGUI:
         else:
             self.connect()
 
-    def connect(self):
-        if not self.current or self.current in self.processes:
+    def connect(self, identifier=None):
+        identifier = identifier or self.current
+        if not identifier or identifier not in self.modules or identifier in self.processes or identifier in self.reconnecting:
             return
-        identifier, state = self.current, self.workspace()
+        state = self.workspace(identifier)
+        previous = next((p for p in self.stopping_processes.values() if p.module.id == identifier), None)
+        if previous:
+            self.reconnecting[identifier] = previous.generation
+            state["status"] = "Waiting for the previous worker to stop..."
+            return
         session = self.preferences["sessions"].setdefault(identifier, uuid.uuid4().hex)
         process = TerminalProcess(self.modules[identifier], self.root, session, self.events)
         self.processes[identifier] = process
-        state["status"] = "Connecting…"
+        state.update(status="Connecting...", last_error="", connection_error="")
         self.refresh_controls()
         def start():
             try:
@@ -647,13 +777,24 @@ class TerminalGUI:
         interrupted = state["busy"]
         state.update(ready=False, busy=False, pending=None, request=None, status="Disconnected")
         if process:
-            threading.Thread(target=process.stop, daemon=True).start()
+            self.stopping_processes[process.generation] = process
+            def finish():
+                error = ""
+                try:
+                    process.stop()
+                    if process.process and process.process.poll() is None:
+                        error = "The previous worker is still stopping. Try reconnecting shortly."
+                except Exception as exc:
+                    error = str(exc)
+                self.management_events.put((identifier, process.generation, error))
+            threading.Thread(target=finish, daemon=True).start()
         if interrupted:
             self.append(identifier, "system", "Request stopped. Previously saved conversations are preserved.")
         self.refresh_controls()
 
     def fail(self, identifier, message):
         state = self.workspace(identifier)
+        state["last_error"] = message
         pending = state.get("pending")
         if pending and pending[1] and identifier == self.current and not self.input_text():
             self.hide_placeholder()
@@ -666,6 +807,24 @@ class TerminalGUI:
         if self.closing:
             return
         self.metrics["poll_cycles"] += 1
+        for generation, previous in list(self.stopping_processes.items()):
+            if previous.process and previous.process.poll() is not None:
+                self.management_events.put((previous.module.id, generation, ""))
+        while not self.management_events.empty():
+            identifier, generation, error = self.management_events.get_nowait()
+            previous = self.stopping_processes.get(generation)
+            still_running = bool(previous and previous.process and previous.process.poll() is None)
+            if not still_running:
+                self.stopping_processes.pop(generation, None)
+            elif not error:
+                error = "The previous worker has not finished stopping. A replacement was not started."
+            if self.reconnecting.get(identifier) == generation:
+                self.reconnecting.pop(identifier)
+                if identifier in self.modules and identifier not in self.processes:
+                    if error:
+                        self.fail(identifier, error)
+                    else:
+                        self.connect(identifier)
         for _ in range(200):
             try:
                 identifier, generation, event = self.events.get_nowait()
@@ -677,7 +836,8 @@ class TerminalGUI:
             state, kind = self.workspace(identifier), event.get("event")
             if kind == "ready":
                 state.update(ready=True, status="Connected", info=event.get("model", "Local process"),
-                             translations=event.get("translations") or ["KJV"], capabilities=event.get("capabilities", []))
+                             translations=event.get("translations") or ["KJV"], capabilities=event.get("capabilities", []),
+                             connection_error=event.get("connection_error", ""))
                 if event.get("session"):
                     self.preferences["sessions"][identifier] = event["session"]
                 if state["pending"]:
@@ -729,14 +889,20 @@ class TerminalGUI:
                 if identifier == self.current:
                     self.render_transcript()
         self.refresh_controls()
+        self.advance_connection_checks()
         self.window.after(70, self.poll)
 
     def refresh_controls(self):
         if not self.current:
+            for button in (self.connect_button, self.send_button, self.history_button, self.new_button):
+                button.configure_state(enabled=False)
+            self.status_label.configure(text="NO TERMINAL SELECTED", fg=MUTED)
+            self.footer.configure(text=f"{len(self.modules)} terminals loaded")
             return
         state = self.workspace()
         running = self.current in self.processes
-        self.connect_button.configure_state(text="Stop" if state["busy"] and running else "Disconnect" if running else "Connect")
+        self.connect_button.configure_state(enabled=self.current not in self.reconnecting,
+            text="Stop" if state["busy"] and running else "Disconnect" if running else "Connect")
         self.send_button.configure_state(enabled=not state["busy"])
         supports_history = "sessions" in state["capabilities"]
         self.history_button.configure_state(enabled=supports_history and not state["busy"])
@@ -821,6 +987,8 @@ class TerminalGUI:
         if module.id in self.modules and self.modules[module.id].path != module.path:
             raise ValueError("A different module already uses that terminal id. Keep ids unique.")
         self.modules[module.id] = module
+        self.preferences["hidden_modules"] = [i for i in self.preferences["hidden_modules"] if i != module.id]
+        self.preferences["module_order"] = list(self.modules)
         if str(module.path) not in self.preferences["modules"]:
             self.preferences["modules"].append(str(module.path))
         self.draw_modules()
@@ -925,6 +1093,7 @@ class TerminalGUI:
         self.entry_row(body, "Reading font size (10–18)", size)
         row = tk.Frame(body, bg=BG)
         row.pack(fill="x", pady=(23, 0))
+        NeonButton(row, "Terminal Manager", self.terminal_manager, width=175).pack(side="left", padx=(0, 8))
         if self.current and self.modules[self.current].settings.get("fields"):
             NeonButton(row, "Terminal settings…", lambda: self.module_settings(), width=185).pack(side="left")
         def apply():
@@ -1044,6 +1213,8 @@ class TerminalGUI:
             self.select_module(selected)
             if translation in self.translation_box.cget("values"):
                 self.translation.set(translation)
+        else:
+            self.empty_workspace()
         self.window.update_idletasks()
         self.transcript.yview("moveto", scroll)
         self.setup_atmosphere()
@@ -1066,13 +1237,12 @@ class TerminalGUI:
         if self.preferences["effects"]:
             self.atmosphere.tick(0)
 
-    def module_settings(self):
-        module = self.modules[self.current]
+    def module_settings(self, identifier=None):
+        module = self.modules[identifier or self.current]
         descriptor = module.settings
-        target = descriptor.get("file", "").replace("{app}", str(self.root)).replace("{module}", str(module.path.parent))
-        path = Path(os.path.expandvars(target))
-        if not path.is_absolute():
-            path = module.path.parent / path
+        if not descriptor.get("fields"):
+            return
+        path = module.settings_path(self.root)
         try:
             existing = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
             if not isinstance(existing, dict):
@@ -1175,7 +1345,7 @@ class TerminalGUI:
         self.closing = True
         self.save()
         # Stop only workers owned by this host; no unrelated terminal is touched.
-        processes = list(self.processes.values())
+        processes = list(self.processes.values()) + list(self.stopping_processes.values())
         self.window.withdraw()
         def finish():
             for process in processes:

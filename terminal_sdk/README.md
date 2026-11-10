@@ -114,6 +114,8 @@ Every request ID receives exactly one final response. Keep IDs unchanged. Never 
 
 Notifications are `terminal/status` (`text`), `terminal/log` (`text`), `terminal/stream` (`text`), and `terminal/history` (`messages`, `session`). History is sent after initialization or may be buffered by the host until compatibility is verified. Unknown optional notifications are ignored.
 
+Host 1.3.0 adds Terminal Manager startup checks. The host reuses the normal `initialize` exchange and sends no execute request for a connection test. In initialization `metadata`, an optional `connection_error` string describes setup that prevents the backend being used; `model_available: false` also marks an unavailable backend. Keep this diagnostic free of secrets and user messages. These are optional metadata additions within API 1.0.0; modules do not need a new action or a protocol version change. A successful handshake alone does not certify inference or tool behavior.
+
 Advertise `new`, `sessions` and `resume` together when providing saved conversations. For `resume`, the host supplies `input.session`. `new` creates a new session while preserving earlier sessions. Advertise `modules` when using the reference chooser. `metadata.translations` supplies choices to manifest actions with `translations: true`; those requests receive `input.translation`.
 
 ## Optional settings
