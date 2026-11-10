@@ -1,0 +1,26 @@
+StatCalc2 runs the original statistical engine locally inside this terminal.
+
+Choose Analyze data and paste numbers separated by spaces, commas or newlines:
+1,2,3,4,5
+
+For several columns, paste CSV or tab-separated data. Example:
+x,y,group
+1,2,A
+2,4,B
+3,6,A
+4,8,B
+
+The original parser detects headers and numeric/categorical columns. Results
+include summaries, confidence intervals, findings, numeric correlations and
+categorical cross-tabs. Missing values follow the original engine's rules.
+
+Confidence defaults to 95%. To set another level, paste JSON:
+{"data":"value\n1\n2\n3\n4\n5","confidence":99}
+
+Choose Analysis as JSON for exact values and calculation traces.
+Open full calculator provides charts, bootstrap, file import and exports in
+your browser. Bootstrap and mixed-column group comparisons use the full app.
+
+Requirements: Python 3 and Node.js 22 or newer. No npm packages or network calls.
+Limits in this terminal: 250 KB input, 20 columns, 100,000 result characters,
+30 seconds per calculation. The full calculator retains its original limits.

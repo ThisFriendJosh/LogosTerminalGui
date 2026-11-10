@@ -1,0 +1,55 @@
+{
+  "schema": "logos-terminal/1",
+  "$schema": "../../terminal_sdk/terminal.schema.json",
+  "id": "statcalc",
+  "name": "StatCalc2",
+  "description": "Local StatCalc2 engine: terminal calculations and optional full visual calculator. Requires Node.js 22+.",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.0.0",
+  "protocol": "jsonrpc",
+  "command": [
+    "{python}",
+    "-u",
+    "{module}/../_calculator/adapter.py",
+    "--module",
+    "{module}"
+  ],
+  "cwd": "{module}",
+  "actions": [
+    {
+      "id": "analyze",
+      "label": "Analyze data",
+      "placeholder": "Paste numbers or CSV with optional column headers",
+      "button": "Analyze",
+      "allow_empty": false
+    },
+    {
+      "id": "json",
+      "label": "Analysis as JSON",
+      "placeholder": "Paste numbers or CSV; includes summaries and calculation traces",
+      "button": "Analyze as JSON",
+      "allow_empty": false
+    },
+    {
+      "id": "help",
+      "label": "Help and examples",
+      "placeholder": "",
+      "button": "Show help",
+      "allow_empty": true
+    },
+    {
+      "id": "open",
+      "label": "Open full calculator",
+      "placeholder": "",
+      "button": "Open calculator",
+      "allow_empty": true
+    }
+  ],
+  "extensions": {
+    "calculator": {
+      "engine": "statcalc",
+      "source_sha256": "f05c5c3bec69adb9f5db3d44b49b3fb44f9eb068b38dcdb239c56e35f253dfa9"
+    }
+  }
+}

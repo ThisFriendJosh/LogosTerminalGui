@@ -25,9 +25,16 @@ To check that your Python includes Tk, run `python -m tkinter`. Some Linux distr
 | Scratchpad | Save and find local notes | Host Python only |
 | LogosMind connector | Connect an existing LogosMind project | Separately installed LogosMind backend and its Python environment |
 | Dungeon Master | Play/test the existing Dungeon World AI engine | Separate `dwa-terminal` worker, llama-server and a local GGUF model |
+| CryptoCalc | Run original encoding, hashing and cipher operations or recipes | Node.js 22+; no npm packages |
+| StatCalc2 | Analyze pasted data, confidence intervals and correlations | Node.js 22+; no npm packages |
 | SDK example | Test a new module connection with an echo worker | Host Python only; load `terminal_sdk/example/terminal.json` |
 
 Scratchpad is the default workspace. The LogosMind connector is optional; the host runs without LogosMind, model weights, or Bible data.
+
+Select **CryptoCalc** or **StatCalc2**, connect, then choose an action. CryptoCalc
+accepts `to_base64 Hello`; StatCalc2 accepts `1,2,3,4,5` or pasted CSV. Both have
+Help with examples and an **Open full calculator** action for charts, file import
+and exports in your browser. See [calculator modules](docs/CALCULATORS.md).
 
 ## Connect LogosMind
 

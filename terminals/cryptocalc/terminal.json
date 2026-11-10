@@ -1,0 +1,55 @@
+{
+  "schema": "logos-terminal/1",
+  "$schema": "../../terminal_sdk/terminal.schema.json",
+  "id": "cryptocalc",
+  "name": "CryptoCalc",
+  "description": "Local CryptoCalc engine: terminal calculations and optional full visual calculator. Requires Node.js 22+.",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.0.0",
+  "protocol": "jsonrpc",
+  "command": [
+    "{python}",
+    "-u",
+    "{module}/../_calculator/adapter.py",
+    "--module",
+    "{module}"
+  ],
+  "cwd": "{module}",
+  "actions": [
+    {
+      "id": "run",
+      "label": "Run operation or recipe",
+      "placeholder": "to_base64 Hello",
+      "button": "Run",
+      "allow_empty": false
+    },
+    {
+      "id": "operations",
+      "label": "Available operations",
+      "placeholder": "Optional operation name or ID",
+      "button": "List operations",
+      "allow_empty": true
+    },
+    {
+      "id": "help",
+      "label": "Help and examples",
+      "placeholder": "",
+      "button": "Show help",
+      "allow_empty": true
+    },
+    {
+      "id": "open",
+      "label": "Open full calculator",
+      "placeholder": "",
+      "button": "Open calculator",
+      "allow_empty": true
+    }
+  ],
+  "extensions": {
+    "calculator": {
+      "engine": "cryptocalc",
+      "source_sha256": "e839064132158b7eaf47dbcc1e6d6c196009476bbabad5dd3452e8dd4fe4d368"
+    }
+  }
+}
