@@ -24,6 +24,7 @@ To check that your Python includes Tk, run `python -m tkinter`. Some Linux distr
 |---|---|---|
 | Scratchpad | Save and find local notes | Host Python only |
 | LogosMind connector | Connect an existing LogosMind project | Separately installed LogosMind backend and its Python environment |
+| Dungeon Master | Play/test the existing Dungeon World AI engine | Separate `dwa-terminal` worker, llama-server and a local GGUF model |
 | SDK example | Test a new module connection with an echo worker | Host Python only; load `terminal_sdk/example/terminal.json` |
 
 Scratchpad is the default workspace. The LogosMind connector is optional; the host runs without LogosMind, model weights, or Bible data.
@@ -39,6 +40,8 @@ Scratchpad is the default workspace. The LogosMind connector is optional; the ho
 The connector launches the backend in its own process and directory. Models, Bible/reference data, training files, and conversations stay in the LogosMind project. They are not part of this repository.
 
 ## Load other terminals
+
+For **Dungeon Master**, use a companion `dwa-terminal` worker from a terminal-enabled [Dungeon World AI](https://github.com/ThisFriendJosh/Dungeon-World-AI) build. Select that worker under **Settings > Terminal Manager > Dungeon Master > Settings**, then Test connection. The Windows beta's existing runtime/model are detected. The terminal uses separate test saves by default and supports Play, campaigns, character selection, actual dice and status. The companion worker is a separate backend deliverable; see [Dungeon Master setup](docs/DUNGEON_MASTER.md).
 
 Use **Load terminal > Load a module** to select a module's `terminal.json`. Its sidebar entry and action buttons appear immediately. Loading registers the module; Connect or Send starts its process.
 

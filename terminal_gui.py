@@ -22,6 +22,17 @@ from terminal_themes import RAIN_LIMITS, ThemeCatalog
 from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
 
 ROOT = Path(__file__).resolve().parent
+
+
+def set_app_icon(window):
+    try:
+        window.terminal_app_icon = tk.PhotoImage(master=window, file=str(ROOT/"assets/icons/logos-terminal.png"))
+        window.iconphoto(True, window.terminal_app_icon)
+        if os.name == "nt":
+            window.iconbitmap(str(ROOT/"assets/icons/logos-terminal.ico"))
+            window.iconbitmap(default=str(ROOT/"assets/icons/logos-terminal.ico"))
+    except (tk.TclError, OSError):
+        pass  # The host also runs from minimal SDK/test checkouts without assets.
 BG = "#040907"
 PANEL = "#07100c"
 FIELD = "#09170f"
@@ -227,6 +238,7 @@ class TerminalGUI:
         self.animation_was_active = False
         self.metrics = {"animation_ticks": 0, "poll_cycles": 0}
         root.title("Logos Terminal — Modular Workspace")
+        set_app_icon(root)
         root.geometry("1320x850")
         root.minsize(980, 650)
         root.configure(bg=BG)
@@ -1364,6 +1376,12 @@ class TerminalGUI:
 
 
 def main():
+    if os.name == "nt":
+        import ctypes
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Logos.Terminal.GUI")
+        except (AttributeError, OSError):
+            pass
     root = tk.Tk()
     TerminalGUI(root)
     root.mainloop()

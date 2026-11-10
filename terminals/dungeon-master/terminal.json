@@ -1,0 +1,31 @@
+{
+  "$schema": "../../terminal_sdk/terminal.schema.json",
+  "schema": "logos-terminal/1",
+  "id": "dungeon-master",
+  "name": "Dungeon Master",
+  "description": "Play and test your local Dungeon World AI narrator",
+  "version": "1.0.0",
+  "api_version": "1.0.0",
+  "min_host_version": "1.3.0",
+  "protocol": "jsonrpc",
+  "command": ["{python}", "-u", "{module}/adapter.py", "--config", "{data}/settings.json", "--data", "{data}", "--session", "{session}"],
+  "cwd": "{module}",
+  "settings": {
+    "file": "{app}/state/terminal-modules/dungeon-master/settings.json",
+    "fields": [
+      {"key": "worker", "label": "Dungeon World terminal worker (dwa-terminal.exe)", "type": "file"},
+      {"key": "server", "label": "llama-server executable (optional; installed beta detected)", "type": "file"},
+      {"key": "model", "label": "GGUF model (optional; installed beta model detected)", "type": "file"},
+      {"key": "gpu_layers", "label": "GPU layers (blank or 0 uses CPU)", "type": "integer", "min": 0, "max": 999},
+      {"key": "game_folder", "label": "Save root (optional; default is separate terminal test games)", "type": "string"}
+    ]
+  },
+  "actions": [
+    {"id": "chat", "label": "Play", "placeholder": "Describe what your character does...", "button": "Send action"},
+    {"id": "sessions", "label": "Campaigns", "placeholder": "Browse saved terminal campaigns", "button": "Browse", "allow_empty": true},
+    {"id": "new", "label": "New campaign", "placeholder": "Campaign name (optional)", "button": "Create", "allow_empty": true},
+    {"id": "characters", "label": "Characters", "placeholder": "Blank to list, exact name/ID to select, or party", "button": "Select", "allow_empty": true},
+    {"id": "roll", "label": "Roll dice", "placeholder": "Real recorded dice, e.g. 1d20+3 or 2d6", "button": "Roll"},
+    {"id": "status", "label": "Status", "placeholder": "Check the local model and selected campaign", "button": "Check", "allow_empty": true}
+  ]
+}

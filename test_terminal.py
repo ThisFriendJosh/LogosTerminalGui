@@ -137,7 +137,7 @@ class ModuleTests(unittest.TestCase):
     def test_bundled_manifests_are_valid_and_independent(self):
         modules,errors=discover(ROOT)
         self.assertFalse(errors)
-        self.assertEqual(set(modules),{"logosmind","scratchpad"})
+        self.assertEqual(set(modules),{"logosmind","scratchpad","dungeon-master"})
         self.assertNotEqual(modules["logosmind"].command,modules["scratchpad"].command)
 
     def test_incompatible_api_and_host_versions_are_blocked(self):
