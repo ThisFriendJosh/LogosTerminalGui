@@ -1,0 +1,51 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-dos",
+  "name": "Classic DOS",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied DOS style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#0000a8",
+    "panel": "#0000a8",
+    "field": "#000000",
+    "accent": "#54fcfc",
+    "accent_bright": "#fcfcfc",
+    "text": "#a8a8a8",
+    "muted": "#54fcfc",
+    "edge": "#a8a8a8",
+    "error": "#fc5454",
+    "selection": "#000054",
+    "selection_text": "#fcfcfc",
+    "code_background": "#000000",
+    "placeholder": "#54fcfc",
+    "disabled": "#54fcfc",
+    "button_fill": "#000054",
+    "button_disabled": "#0000a8",
+    "footer": "#54fcfc",
+    "user": "#fcfcfc",
+    "border_glow": "#54fcfc",
+    "brand": "#fcfcfc"
+  },
+  "typography": {
+    "families": [
+      "VT323",
+      "Consolas",
+      "DejaVu Sans Mono",
+      "Courier"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

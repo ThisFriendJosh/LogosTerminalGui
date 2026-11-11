@@ -43,7 +43,7 @@ class LayoutTests(unittest.TestCase):
             app.preferences["effects"] = False
             app.update_effect_label()
             try:
-                for theme in ("logos-classic", "galactic-phosphor", "galactic-2", "logos-classic"):
+                for theme in (*app.theme_catalog.themes, "logos-classic"):
                     app.apply_theme(theme)
                     for width, height, font_size in [(1320, 850, 12), (980, 650, 12), (980, 650, 18)]:
                       with self.subTest(theme=theme, width=width, height=height, font_size=font_size):
@@ -108,6 +108,20 @@ class LayoutTests(unittest.TestCase):
                     self.assertEqual(app.processes[app.current].process.pid, original_pid)
                     self.assertIsNone(process.process.poll())
                     self.assertEqual(geometry, [(w.winfo_x(), w.winfo_y(), w.winfo_width(), w.winfo_height()) for w in (app.sidebar, app.input, app.transcript, app.send_button)])
+                app.transcript._select_all()
+                for theme in ("classic-standard", "classic-light", "classic-dark", "classic-alchemist", "classic-dos", "classic-lovecraft", "classic-matrix"):
+                    app.apply_theme(theme)
+                    pump(window)
+                    preferred = app.theme.data["typography"]["families"][0]
+                    if preferred in window.terminal_bundled_font_families:
+                        self.assertEqual(app.body_font.actual()["family"].casefold(), preferred.casefold())
+                    self.assertEqual(app.input_text(), "Unsent draft\nsecond line")
+                    self.assertEqual(app.workspace()["entries"], entries)
+                    self.assertEqual(app.processes[app.current].process.pid, original_pid)
+                    self.assertIsNone(process.process.poll())
+                    self.assertTrue(app.input.winfo_ismapped())
+                app.apply_theme("galactic-2")
+                pump(window)
                 app.transcript._select_all()
                 app.transcript._copy()
                 self.assertIn("Received: Theme connection check", window.clipboard_get())

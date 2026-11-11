@@ -1,0 +1,51 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-lovecraft",
+  "name": "Classic Lovecraft",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied Lovecraft style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#0a1314",
+    "panel": "#101c1d",
+    "field": "#050a0b",
+    "accent": "#7fb7a4",
+    "accent_bright": "#b9d8c8",
+    "text": "#d9d2bf",
+    "muted": "#93a094",
+    "edge": "#23393a",
+    "error": "#e0b08a",
+    "selection": "#1a2e2b",
+    "selection_text": "#b9d8c8",
+    "code_background": "#050a0b",
+    "placeholder": "#93a094",
+    "disabled": "#93a094",
+    "button_fill": "#1a2e2b",
+    "button_disabled": "#101c1d",
+    "footer": "#93a094",
+    "user": "#b9d8c8",
+    "border_glow": "#7fb7a4",
+    "brand": "#b9d8c8"
+  },
+  "typography": {
+    "families": [
+      "IM Fell English",
+      "Georgia",
+      "DejaVu Serif",
+      "Times New Roman"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

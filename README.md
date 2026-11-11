@@ -4,6 +4,11 @@ A lightweight desktop host for modular terminals. Load a terminal, switch worksp
 
 Choose **Logos Classic** (the original design), **Galactic Phosphor**, or **Galactic 2.0** in Settings. All use the same modular workspace layout. Galactic 2.0 adds denser columns, independently changing symbols, smoother falling, soft phosphor halos and fading after-images. The host uses Python/Tk and the standard library, with no third-party runtime packages.
 
+Settings also includes **Classic Standard** and six converted styles: **Classic
+Light**, **Dark**, **Alchemist**, **DOS**, **Lovecraft** and **Matrix**. There are
+ten shipped themes in total. The original and Galactic presets remain intact;
+the new classic styles include their supplied fonts and licenses.
+
 ## Run
 
 Use Python 3.11 or newer with Tk available.

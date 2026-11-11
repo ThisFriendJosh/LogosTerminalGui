@@ -1,0 +1,52 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-dark",
+  "name": "Classic Dark",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied Dark style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#0f1320",
+    "panel": "#161b2c",
+    "field": "#06080c",
+    "accent": "#c4b2ff",
+    "accent_bright": "#e8edff",
+    "text": "#dde2ef",
+    "muted": "#9aa2b8",
+    "edge": "#262d44",
+    "error": "#ffb193",
+    "selection": "#2a1f4a",
+    "selection_text": "#e8edff",
+    "code_background": "#06080c",
+    "placeholder": "#9aa2b8",
+    "disabled": "#9aa2b8",
+    "button_fill": "#2a1f4a",
+    "button_disabled": "#161b2c",
+    "footer": "#9aa2b8",
+    "user": "#e8edff",
+    "border_glow": "#6a1fe0",
+    "brand": "#e8edff"
+  },
+  "typography": {
+    "families": [
+      "Jost",
+      "Segoe UI",
+      "DejaVu Sans",
+      "Liberation Sans",
+      "Arial"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

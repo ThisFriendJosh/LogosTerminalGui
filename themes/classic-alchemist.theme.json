@@ -1,0 +1,52 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-alchemist",
+  "name": "Classic Alchemist",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied Alchemist style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#efe3c6",
+    "panel": "#f8efd9",
+    "field": "#f8efd9",
+    "accent": "#8a4b12",
+    "accent_bright": "#4a2a0c",
+    "text": "#3a2816",
+    "muted": "#6b5233",
+    "edge": "#d6c29a",
+    "error": "#8a2e10",
+    "selection": "#eedcb5",
+    "selection_text": "#4a2a0c",
+    "code_background": "#eedcb5",
+    "placeholder": "#6b5233",
+    "disabled": "#6b5233",
+    "button_fill": "#eedcb5",
+    "button_disabled": "#f8efd9",
+    "footer": "#6b5233",
+    "user": "#4a2a0c",
+    "border_glow": "#8a4b12",
+    "brand": "#4a2a0c"
+  },
+  "typography": {
+    "families": [
+      "IM Fell English",
+      "Cinzel",
+      "Georgia",
+      "DejaVu Serif",
+      "Times New Roman"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

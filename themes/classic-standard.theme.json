@@ -1,0 +1,52 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-standard",
+  "name": "Classic Standard",
+  "version": "1.0.0",
+  "description": "A separate classic base: the restrained Logos green palette with Jost reading typography. The original Logos Classic preset remains unchanged.",
+  "palette": {
+    "background": "#040907",
+    "panel": "#07100c",
+    "field": "#09170f",
+    "accent": "#8df6a5",
+    "accent_bright": "#b9ffc6",
+    "text": "#d1e8d6",
+    "muted": "#7e9d86",
+    "edge": "#244e32",
+    "error": "#ffb19d",
+    "selection": "#265339",
+    "selection_text": "#b9ffc6",
+    "code_background": "#0d2116",
+    "placeholder": "#5f7e68",
+    "disabled": "#4d6654",
+    "button_fill": "#184229",
+    "button_disabled": "#183323",
+    "footer": "#536d5b",
+    "user": "#a2caaa",
+    "border_glow": "#68bd7c",
+    "brand": "#80de96"
+  },
+  "typography": {
+    "families": [
+      "Jost",
+      "Segoe UI",
+      "DejaVu Sans",
+      "Liberation Sans",
+      "Arial"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": true,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

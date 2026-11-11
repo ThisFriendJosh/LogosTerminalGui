@@ -19,6 +19,7 @@ from terminal_core import ANSI, TerminalModule, TerminalProcess, console_python,
 from terminal_diagnostics import check, finish_connection_check, preflight
 from terminal_protocol import API_VERSION, HOST_VERSION
 from terminal_themes import RAIN_LIMITS, ThemeCatalog
+from terminal_fonts import load_bundled_fonts
 from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
 from calculator_workspace import CalculatorWorkspace, workspace_engine
 
@@ -54,7 +55,7 @@ def activate_palette(theme, window):
     PALETTE = theme.palette
     BG, PANEL, FIELD = (PALETTE[k] for k in ("background", "panel", "field"))
     GREEN, BRIGHT, TEXT, MUTED, EDGE, ERROR = (PALETTE[k] for k in ("accent", "accent_bright", "text", "muted", "edge", "error"))
-    available = set(tkfont.families(window))
+    available = set(tkfont.families(window)) | getattr(window, "terminal_bundled_font_families", set())
     FONT_FAMILY = next((f for f in theme.data["typography"]["families"] if f in available), "Courier")
     window.terminal_theme, window.terminal_font_family = theme, FONT_FAMILY
 
@@ -220,6 +221,7 @@ class TerminalGUI:
         self.theme_catalog = ThemeCatalog(self.root)
         self.theme = self.theme_catalog.selected(self.preferences.get("theme", "logos-classic"))
         self.preferences["theme"] = self.theme.id
+        root.terminal_bundled_font_families = load_bundled_fonts(ROOT / "assets/fonts/classic")
         activate_palette(self.theme, root)
         root.terminal_buttons = []
         self.atmosphere = None

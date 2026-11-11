@@ -1,0 +1,52 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-light",
+  "name": "Classic Light",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied Light style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#f6f7fb",
+    "panel": "#ffffff",
+    "field": "#ffffff",
+    "accent": "#6a1fe0",
+    "accent_bright": "#16244a",
+    "text": "#1c2233",
+    "muted": "#5b6275",
+    "edge": "#e2e5ee",
+    "error": "#a3401a",
+    "selection": "#ece4fd",
+    "selection_text": "#16244a",
+    "code_background": "#ece4fd",
+    "placeholder": "#5b6275",
+    "disabled": "#5b6275",
+    "button_fill": "#ece4fd",
+    "button_disabled": "#ffffff",
+    "footer": "#5b6275",
+    "user": "#16244a",
+    "border_glow": "#6a1fe0",
+    "brand": "#16244a"
+  },
+  "typography": {
+    "families": [
+      "Jost",
+      "Segoe UI",
+      "DejaVu Sans",
+      "Liberation Sans",
+      "Arial"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}

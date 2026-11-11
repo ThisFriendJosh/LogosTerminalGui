@@ -14,6 +14,38 @@ Imported definitions are copied to `state/themes/ID.theme.json`, separate from G
 
 The original **Logos Classic** remains the default for existing installations. A missing or invalid custom theme falls back to Classic; errors in individual custom definitions do not stop other themes loading.
 
+## Included presets (10)
+
+The original `logos-classic`, `galactic-phosphor` and `galactic-2` definitions
+remain unchanged. A separate Classic Standard base and six conversions from
+the supplied `fonts and styles.zip` provide the classic collection:
+
+| Theme | Style |
+| --- | --- |
+| Logos Classic | Original restrained green workspace; default |
+| Galactic Phosphor | Original Galactic preset |
+| Galactic 2.0 | Original living-code Galactic preset |
+| Classic Standard | Separate restrained green classic base with Jost |
+| Classic Light | Light paper surfaces, navy text and purple accents |
+| Classic Dark | Dark navy surfaces and pale purple accents |
+| Classic Alchemist | Parchment, brown ink and brass colors; IM Fell English |
+| Classic DOS | DOS blue, cyan accents and black fields; VT323 |
+| Classic Lovecraft | Deep teal, bone text and muted green; IM Fell English |
+| Classic Matrix | Black/green terminal palette; Share Tech Mono |
+
+All seven Classic collection definitions use the existing classic renderer.
+The six conversions have ambient effects disabled; their CSS fog, embers and
+rain are represented by palette and typography rather than additional renderers.
+Light conversions use readable light input surfaces to fit the native host's
+shared text-color model. Layout and backend behavior are shared with the
+existing presets. The initial catalog is ten themes; imported custom themes
+can add more entries.
+
+Supplied fonts and their original OFL notices are bundled under
+`assets/fonts/classic/`. The host loads them for the current process when the
+platform supports it; existing theme family preferences and defaults remain
+unchanged. See that folder's README for family mappings and fallback behavior.
+
 **Galactic 2.0** is a separate preset, id `galactic-2`, requiring host 1.2.0 or newer. In Settings, its **Rain settings** editor saves a personal custom definition and selects it in the theme menu; Apply activates that selection. Editing an already selected custom theme updates that custom definition. Editing a bundled preset creates a new custom id and leaves the preset intact.
 
 ## Parsed elements
