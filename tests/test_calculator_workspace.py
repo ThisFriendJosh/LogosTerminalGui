@@ -164,3 +164,18 @@ class CalculatorWorkspaceTests(unittest.TestCase):
         self.wait_result(view)
         self.assertEqual(view.result["output"], "Khoor")
         self.assertEqual(view.result["steps"][0]["status"], "off")
+
+    def test_unload_and_reload_keep_visual_recipe_and_input(self):
+        view = self.view("cryptocalc")
+        view.search.set("to_base64")
+        view.operation_list.selection_set(0)
+        view.add_operation()
+        view.source.insert("1.0", "Unloaded visual draft")
+        self.app.unload_button.invoke()
+        self.assertNotIn("cryptocalc", self.app.modules)
+        self.assertNotIn("cryptocalc", self.app.calculator_views)
+        self.app.register(ROOT / "terminals/cryptocalc/terminal.json")
+        restored = self.app.calculator_views["cryptocalc"]
+        self.assertEqual(restored.source.get("1.0", "end-1c"), "Unloaded visual draft")
+        self.assertEqual(restored.recipe[0]["op"], "to_base64")
+        self.assertNotIn("cryptocalc", self.app.processes)

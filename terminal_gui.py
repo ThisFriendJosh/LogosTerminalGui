@@ -223,10 +223,15 @@ class TerminalGUI:
         activate_palette(self.theme, root)
         root.terminal_buttons = []
         self.atmosphere = None
-        self.modules, errors = discover(self.root, self.preferences["modules"])
+        initialized = self.preferences["module_registry_initialized"]
+        self.modules, errors = discover(self.root, self.preferences["modules"], include_bundled=not initialized)
         order = self.preferences["module_order"]
         self.modules = dict(sorted(((i, m) for i, m in self.modules.items() if i not in self.preferences["hidden_modules"]),
                                    key=lambda item: order.index(item[0]) if item[0] in order else len(order)))
+        if not initialized:
+            # Migrate the current sidebar once. Later starts use explicit registrations.
+            self.preferences["modules"] = [str(module.path) for module in self.modules.values()]
+            self.preferences["module_registry_initialized"] = True
         self.events, self.processes, self.workspaces = queue.Queue(), {}, {}
         self.management_events = queue.Queue()
         self.stopping_processes, self.reconnecting, self.connection_checks = {}, {}, {}
@@ -256,6 +261,7 @@ class TerminalGUI:
             self.select_module(selected if selected in self.modules else next(iter(self.modules)))
         else:
             self.empty_workspace()
+            self.save()
         self.setup_atmosphere()
         for error in errors + self.theme_catalog.errors:
             self.show_system(error, "error")
@@ -322,7 +328,9 @@ class TerminalGUI:
         self.module_canvas.bind("<MouseWheel>", lambda e: self.module_canvas.yview_scroll(-int(e.delta/120), "units"))
         bottom = tk.Frame(sidebar, bg=PANEL)
         bottom.pack(side="bottom", fill="x", padx=12, pady=15)
-        NeonButton(bottom, "+ Load terminal", self.load_dialog, width=184, primary=True).pack(fill="x", pady=(0, 14))
+        NeonButton(bottom, "+ Load terminal", self.load_dialog, width=184, primary=True).pack(fill="x", pady=(0, 5))
+        self.unload_button = NeonButton(bottom, "Unload terminal", self.request_unload, width=184, small=True)
+        self.unload_button.pack(fill="x", pady=(0, 14))
         self.label(bottom, "LOCAL WORKSPACE", MUTED, 9, anchor="w").pack(fill="x", padx=5)
         self.label(bottom, "Your tools. One interface.", PALETTE["footer"], 8, anchor="w").pack(fill="x", padx=5, pady=(5, 0))
         main = tk.Frame(body, bg=BG)
@@ -449,6 +457,7 @@ class TerminalGUI:
             button = NeonButton(self.module_list, label, lambda i=identifier: self.select_module(i), width=190, height=49, icon=icons[index % len(icons)])
             button.pack(fill="x", pady=(0, 4))
             button.bind("<MouseWheel>", lambda e: self.module_canvas.yview_scroll(-int(e.delta/120), "units"))
+            button.bind("<Button-3>", lambda event, i=identifier: self.module_menu(event, i))
             self.module_buttons[identifier] = button
         if not self.modules:
             self.label(self.module_list, "No modules loaded.\nUse Load terminal below.", MUTED, 10, justify="left").pack(padx=9, pady=10)
@@ -494,6 +503,32 @@ class TerminalGUI:
             button.configure_state(active=i == self.current)
         self.save()
 
+    def can_unload(self, identifier):
+        if identifier not in self.modules:
+            return False
+        state = self.workspace(identifier)
+        return not state["busy"] and identifier not in self.reconnecting and not (
+            identifier in self.processes and not state["ready"])
+
+    def request_unload(self, identifier=None):
+        identifier = identifier or self.current
+        if self.can_unload(identifier):
+            self.unload_module(identifier)
+
+    def module_menu(self, event, identifier):
+        previous = getattr(self, "module_context_menu", None)
+        if previous and previous.winfo_exists():
+            previous.destroy()
+        menu = tk.Menu(self.window, tearoff=False, bg=PANEL, fg=TEXT,
+                       activebackground=PALETTE["selection"], activeforeground=BRIGHT)
+        self.module_context_menu = menu
+        menu.add_command(label="Unload from sidebar", command=lambda: self.request_unload(identifier),
+                         state="normal" if self.can_unload(identifier) else "disabled")
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+
     def unload_module(self, identifier):
         module = self.modules[identifier]
         if identifier == self.current:
@@ -501,10 +536,14 @@ class TerminalGUI:
         self.reconnecting.pop(identifier, None)
         self.stop(identifier)
         if identifier in self.calculator_views:
-            self.calculator_views.pop(identifier).destroy()
+            view = self.calculator_views.pop(identifier)
+            view.snapshot()
+            view.destroy()
         self.connection_checks.pop(identifier, None)
         del self.modules[identifier]
         self.preferences["modules"] = [p for p in self.preferences["modules"] if Path(p).resolve() != module.path]
+        self.preferences["unloaded_modules"] = [str(module.path), *[
+            p for p in self.preferences["unloaded_modules"] if Path(p).resolve() != module.path]][:128]
         if identifier not in self.preferences["hidden_modules"]:
             self.preferences["hidden_modules"].append(identifier)
         self.preferences["module_order"] = list(self.modules)
@@ -964,12 +1003,13 @@ class TerminalGUI:
 
     def refresh_controls(self):
         if not self.current:
-            for button in (self.connect_button, self.send_button, self.history_button, self.new_button):
+            for button in (self.connect_button, self.send_button, self.history_button, self.new_button, self.unload_button):
                 button.configure_state(enabled=False)
             self.status_label.configure(text="NO TERMINAL SELECTED", fg=MUTED)
             self.footer.configure(text=f"{len(self.modules)} terminals loaded")
             return
         state = self.workspace()
+        self.unload_button.configure_state(enabled=self.can_unload(self.current))
         if self.current in self.calculator_views:
             self.calculator_views[self.current].set_busy(state["busy"])
         running = self.current in self.processes
@@ -1039,20 +1079,49 @@ class TerminalGUI:
         text.configure(state="disabled")
 
     def load_dialog(self):
-        dialog = self.dialog("Load a terminal", "620x325")
+        unloaded = []
+        for path in self.preferences["unloaded_modules"]:
+            try:
+                module = TerminalModule.load(path)
+                if module.id not in self.modules:
+                    unloaded.append((module.name, path))
+            except (OSError, ValueError, TypeError):
+                unloaded.append((Path(path).parent.name + " (file unavailable)", path))
+        dialog = self.dialog("Load a terminal", "650x550" if unloaded else "650x365")
         self.label(dialog, "ADD A TERMINAL", GREEN, 17, True).pack(anchor="w", padx=25, pady=(25, 10))
-        self.label(dialog, "Load a module with its own tools and settings,\nor link a terminal program you already have.", TEXT, 11, justify="left").pack(anchor="w", padx=25, pady=(0, 22))
+        self.label(dialog, "Load a terminal to show it in the sidebar.\nUnloading keeps its files and saved data in place.", TEXT, 11, justify="left").pack(anchor="w", padx=25, pady=(0, 14))
+        def register(path):
+            try:
+                self.register(path)
+                dialog.destroy()
+            except (OSError, ValueError, TypeError) as exc:
+                messagebox.showerror("Cannot load terminal", str(exc), parent=dialog)
+        if unloaded:
+            self.label(dialog, "PREVIOUSLY UNLOADED", MUTED, 9, True).pack(anchor="w", padx=25, pady=(0, 5))
+            listing = tk.Listbox(dialog, height=4, bg=FIELD, fg=TEXT, selectbackground=PALETTE["selection"],
+                                 exportselection=False, font=(FONT_FAMILY, 10), bd=0)
+            listing.pack(fill="x", padx=25, pady=(0, 7))
+            for name, _ in unloaded:
+                listing.insert("end", name)
+            listing.selection_set(0)
+            def reload_selected():
+                selected = listing.curselection()
+                if selected:
+                    register(unloaded[selected[0]][1])
+            listing.bind("<Double-Button-1>", lambda _: reload_selected())
+            NeonButton(dialog, "Reload selected", reload_selected, width=260, height=38, primary=True).pack(anchor="w", padx=25, pady=(0, 12))
         def load():
-            path = filedialog.askopenfilename(parent=dialog, title="Choose a terminal module", filetypes=[("Terminal module", "*.json")], initialdir=self.root / "terminals")
+            folder = self.root / "terminals"
+            path = filedialog.askopenfilename(parent=dialog, title="Open a terminal folder and select terminal.json",
+                filetypes=[("Terminal module", "terminal.json"), ("JSON manifest", "*.json")],
+                initialdir=folder if folder.is_dir() else self.root)
             if path:
-                try:
-                    self.register(path)
-                    dialog.destroy()
-                except (OSError, ValueError, TypeError) as exc:
-                    messagebox.showerror("Cannot load terminal", str(exc), parent=dialog)
-        NeonButton(dialog, "Load a module…", load, width=260, height=42, primary=True).pack(anchor="w", padx=25, pady=(0, 10))
+                register(path)
+        NeonButton(dialog, "Browse terminal folders...", load, width=300, height=42, primary=not unloaded).pack(anchor="w", padx=25, pady=(0, 10))
         NeonButton(dialog, "Link an existing terminal…", lambda: (dialog.destroy(), self.link_dialog()), width=260, height=42).pack(anchor="w", padx=25)
-        self.label(dialog, "Loading registers a module. It starts when you connect or send.", MUTED, 9).pack(anchor="w", padx=25, pady=20)
+        self.label(dialog, "Browse opens the terminals folder. Open the terminal's subfolder\nand select terminal.json. Loading adds its icon; connect or send to start.\nOnly loaded terminals appear, even when other folders are present.",
+                   MUTED, 9, justify="left").pack(anchor="w", padx=25, pady=16)
+        return dialog
 
     def register(self, path):
         module = TerminalModule.load(path)
@@ -1060,6 +1129,7 @@ class TerminalGUI:
             raise ValueError("A different module already uses that terminal id. Keep ids unique.")
         self.modules[module.id] = module
         self.preferences["hidden_modules"] = [i for i in self.preferences["hidden_modules"] if i != module.id]
+        self.preferences["unloaded_modules"] = [p for p in self.preferences["unloaded_modules"] if Path(p).resolve() != module.path]
         self.preferences["module_order"] = list(self.modules)
         if str(module.path) not in self.preferences["modules"]:
             self.preferences["modules"].append(str(module.path))

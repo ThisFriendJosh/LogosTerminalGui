@@ -199,6 +199,60 @@ class ManagerTests(unittest.TestCase):
         self.app.register(paths["bundled-a"])
         self.assertIn("bundled-a", self.app.modules)
 
+    def restart_app(self):
+        self.destroy_app()
+        import tkinter as tk
+        from terminal_gui import TerminalGUI
+        self.window = tk.Tk()
+        self.app = TerminalGUI(self.window, app_root=self.root)
+
+    def test_new_folders_require_explicit_load_and_browse_starts_in_terminals(self):
+        folder = self.root / "terminals" / "new-terminal"
+        folder.mkdir(parents=True)
+        manifest = json.loads(self.module.path.read_text(encoding="utf-8"))
+        manifest.update(id="new-terminal", name="New terminal", command=["{python}", "-u", str(ROOT / "terminal_sdk/worker_template.py")])
+        path = folder / "terminal.json"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        self.restart_app()
+        self.assertNotIn("new-terminal", self.app.modules)
+        dialog = self.app.load_dialog()
+        pump(self.window)
+        browse = next(w for w in dialog.winfo_children() if getattr(w, "label", "") == "Browse terminal folders...")
+        with patch("terminal_gui.filedialog.askopenfilename", return_value=str(path)) as chooser:
+            browse.invoke()
+        self.assertEqual(chooser.call_args.kwargs["initialdir"], self.root / "terminals")
+        self.assertIn("terminal.json", chooser.call_args.kwargs["title"])
+        self.assertIn("new-terminal", self.app.modules)
+        self.assertNotIn("new-terminal", self.app.processes)
+        self.restart_app()
+        self.assertIn("new-terminal", self.app.modules)
+
+    def test_sidebar_unload_and_reload_list_survive_restart_without_file_changes(self):
+        app = self.app
+        path = self.module.path
+        before = path.read_bytes()
+        marker = self.root / "state/terminal-modules/sdk-example/saved-data.txt"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text("Keep this saved data", encoding="utf-8")
+        app.hide_placeholder()
+        app.input.insert("1.0", "Keep the draft")
+        app.unload_button.invoke()
+        self.assertNotIn(self.module.id, app.modules)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(marker.read_text(encoding="utf-8"), "Keep this saved data")
+        self.restart_app()
+        self.assertNotIn(self.module.id, self.app.modules)
+        dialog = self.app.load_dialog()
+        pump(self.window)
+        reload_button = next(w for w in dialog.winfo_children() if getattr(w, "label", "") == "Reload selected")
+        self.assertTrue(reload_button.winfo_ismapped())
+        self.assertLessEqual(reload_button.winfo_rooty()+reload_button.winfo_height(), dialog.winfo_rooty()+dialog.winfo_height())
+        reload_button.invoke()
+        self.assertIn(self.module.id, self.app.modules)
+        self.assertNotIn(self.module.id, self.app.processes)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(marker.read_text(encoding="utf-8"), "Keep this saved data")
+
 
 if __name__ == "__main__":
     unittest.main()

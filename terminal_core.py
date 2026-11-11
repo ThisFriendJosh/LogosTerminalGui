@@ -149,9 +149,10 @@ class TerminalModule:
         return command, cwd
 
 
-def discover(root, extra_paths=()):
+def discover(root, extra_paths=(), include_bundled=True):
     modules, errors = {}, []
-    paths = [*sorted((Path(root) / "terminals").glob("*/terminal.json")), *(Path(p) for p in extra_paths)]
+    paths = [*(sorted((Path(root) / "terminals").glob("*/terminal.json")) if include_bundled else []),
+             *(Path(p) for p in extra_paths)]
     for path in paths:
         try:
             module = TerminalModule.load(path)
@@ -165,7 +166,7 @@ def discover(root, extra_paths=()):
 
 def read_preferences(path):
     defaults = {"effects": True, "font_size": 12, "modules": [], "sessions": {}, "selected": "scratchpad", "theme": "logos-classic",
-                "module_order": [], "hidden_modules": []}
+                "module_order": [], "hidden_modules": [], "unloaded_modules": [], "module_registry_initialized": False}
     try:
         saved = json.loads(Path(path).read_text(encoding="utf-8"))
         if not isinstance(saved, dict):
@@ -178,6 +179,11 @@ def read_preferences(path):
             pass
         if isinstance(saved.get("modules"), list):
             defaults["modules"] = [p for p in saved["modules"] if isinstance(p, str)][:128]
+        if isinstance(saved.get("unloaded_modules"), list):
+            defaults["unloaded_modules"] = list(dict.fromkeys(p for p in saved["unloaded_modules"]
+                if isinstance(p, str) and p and "\x00" not in p))[:128]
+        if isinstance(saved.get("module_registry_initialized"), bool):
+            defaults["module_registry_initialized"] = saved["module_registry_initialized"]
         for key in ("module_order", "hidden_modules"):
             if isinstance(saved.get(key), list):
                 defaults[key] = list(dict.fromkeys(p for p in saved[key] if isinstance(p, str) and re.fullmatch(r"[a-z0-9][a-z0-9_.-]{0,63}", p)))[:256]

@@ -23,7 +23,29 @@ For LogosMind, Bible/Search/Lexicon output becomes source data for the next chat
 
 ## Add a terminal
 
-Load terminal > Load a module opens a JSON module manifest. The host checks the manifest and, on connection, verifies the worker's version and advertised capabilities. Importing a module does not execute its program. Use the SDK contract for new rich integrations.
+**Load terminal > Browse terminal folders** opens the `terminals` directory.
+Open the desired terminal's subfolder and select **terminal.json**. The host
+checks the manifest and, on connection, verifies the worker's version and
+advertised capabilities. Loading adds the sidebar entry; it does not execute
+the program. Use the SDK contract for new rich integrations.
+
+To remove a sidebar icon, select it and press **Unload terminal** below the
+sidebar, or right-click the icon and choose **Unload from sidebar**. The files,
+settings, notes and saved conversations remain in their original folders.
+Unloading stops that terminal's owned worker and removes its registration.
+Other terminals and their connections continue normally.
+
+To restore it, open **Load terminal**, select it under **Previously unloaded**
+and press **Reload selected**. This list is remembered after restarting the
+app, including terminals loaded from other folders. You can also browse to its
+original `terminal.json`. Connect or send when ready to start it again.
+
+The sidebar is your chosen list of loaded terminals. Placing a new module in
+the `terminals` folder does not add an icon automatically. Your current sidebar
+is migrated once when upgrading; later launches restore your explicit loaded
+list. Load and Unload manage this list; Connect and Disconnect retain their
+existing behavior. Unsent text and visual drafts survive unloading and reloading
+within the same running app; closing the app clears unsaved drafts.
 
 Load terminal > Link an existing terminal registers a normal redirected-input/output console program, Python script or Windows batch file. Give it a name, program path, optional arguments and working folder. Quote argument paths containing spaces. Full-screen terminal applications and interactive password prompts may need a purpose-built adapter.
 
@@ -37,7 +59,7 @@ Open **Settings > Terminal Manager**. Selecting a row inspects that terminal wit
 - **Test connection** starts a disconnected module or reuses its existing worker. It verifies the startup handshake and declared actions, sending no chat or tool command. It leaves the terminal connected. A text adapter has no capability handshake; a running text process is reported separately. Backend initialization may load its model or restore its normal session.
 - **Reconnect** waits for the old owned worker to stop, then reconnects with the same session. Drafts and the host's visible transcript remain; a backend may refresh its saved history. Reconnect and Unload are disabled during a request or startup.
 - **Move up / Move down** changes the sidebar order and remembers it.
-- **Unload** stops the worker and removes the entry. It leaves the manifest, settings, saved conversations and notes in place. Load the same manifest again to restore it. In-memory drafts remain available when reloading during the same app session.
+- **Unload** stops the worker and removes the entry. It leaves the manifest, settings, saved conversations and notes in place. Use Load terminal > Reload selected, or browse to the same manifest, to restore it. In-memory drafts remain available when reloading during the same app session.
 - **Export report** previews and saves diagnostic JSON for your tester to send back. The default excludes conversations, drafts, settings values and raw logs. Optional diagnostic text redacts known paths and common credentials; review it before sharing. Export does not upload the file.
 
 See [Beta testing and diagnostics](TESTING.md) for a short tester workflow and the limits of connection checks.
