@@ -1,0 +1,51 @@
+{
+  "$schema": "theme.schema.json",
+  "schema": "logos-terminal-theme/1",
+  "id": "classic-matrix",
+  "name": "Classic Matrix",
+  "version": "1.0.0",
+  "description": "Classic workspace conversion of the supplied Matrix style, with its palette and bundled font preferences. No Galactic animation changes.",
+  "palette": {
+    "background": "#020604",
+    "panel": "#07110a",
+    "field": "#000000",
+    "accent": "#39e07a",
+    "accent_bright": "#4dff88",
+    "text": "#c8f5d4",
+    "muted": "#6fbf8a",
+    "edge": "#12361f",
+    "error": "#ff6a4a",
+    "selection": "#0d2a18",
+    "selection_text": "#4dff88",
+    "code_background": "#000000",
+    "placeholder": "#6fbf8a",
+    "disabled": "#6fbf8a",
+    "button_fill": "#0d2a18",
+    "button_disabled": "#07110a",
+    "footer": "#6fbf8a",
+    "user": "#4dff88",
+    "border_glow": "#39e07a",
+    "brand": "#4dff88"
+  },
+  "typography": {
+    "families": [
+      "Share Tech Mono",
+      "Consolas",
+      "DejaVu Sans Mono",
+      "Courier"
+    ]
+  },
+  "components": {
+    "button_style": "classic",
+    "module_icons": false,
+    "terminal_prompts": false
+  },
+  "effects": {
+    "digital_rain": false,
+    "text_glow": false,
+    "scanlines": false,
+    "pulse": false,
+    "block_cursor": false,
+    "frame_rate": 8
+  }
+}
