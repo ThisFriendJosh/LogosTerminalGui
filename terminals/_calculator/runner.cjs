@@ -39,9 +39,14 @@ async function cryptoExecute(action, text) {
   const C = window.CryptoCalc;
   if (action === "operations") {
     const needle = text.trim().toLowerCase();
-    return C.Registry.list().filter(d => (d.id + " " + d.name).toLowerCase().includes(needle))
+    const operations = C.Registry.list().filter(d => (d.id + " " + d.name).toLowerCase().includes(needle));
+    const display = operations
       .map(d => d.id + " - " + d.name + "\n  " + d.hint +
         (d.params.length ? "\n  args: " + JSON.stringify(C.Registry.defaults(d.id)) : "")).join("\n\n") || "No matching operations.";
+    return {text: display, audit: {calculator: {type: "operations", operations: operations.map(d => ({
+      id: d.id, name: d.name, category: d.category, hint: d.hint, params: d.params,
+      defaults: C.Registry.defaults(d.id)
+    }))}}};
   }
   if (action !== "run") throw new Error("Unknown CryptoCalc action");
   let request;
@@ -66,9 +71,13 @@ async function cryptoExecute(action, text) {
     throw new Error(failed.name + ": " + failed.problem.message);
   }
   const output = run.final.isText ? C.ByteFormat.utf8Decode(run.final.bytes) : C.ByteFormat.toHex(run.final.bytes);
-  return output + "\n\n" + run.steps.map(s => s.name + ": " + s.inputBytes + " -> " + s.outputBytes + " bytes" +
+  const display = output + "\n\n" + run.steps.map(s => s.name + ": " + s.inputBytes + " -> " + s.outputBytes + " bytes" +
     (s.status === "off" ? " (disabled)" : "") + (s.note ? "\n" + s.note : "")).join("\n") +
     (run.final.isText ? "" : "\nBinary output displayed as hexadecimal.");
+  return {text: display, audit: {calculator: {type: "cryptocalc", output,
+    hex: C.ByteFormat.toHex(run.final.bytes), bytes: run.final.bytes.length,
+    isText: run.final.isText, steps: run.steps.map(s => ({name: s.name, status: s.status,
+      inputBytes: s.inputBytes, outputBytes: s.outputBytes, note: s.note}))}}};
 }
 
 function format(value) {
@@ -114,7 +123,9 @@ function statsExecute(action, text) {
       if (a.kind === "qualitative" && b.kind === "qualitative") pairs.push(S.CrossTab.run(a, b));
     }
   }
-  if (action === "json") return JSON.stringify({dataset, level, reports, pairs}, null, 2);
+  const analysis = {dataset, level, reports, pairs};
+  const audit = {calculator: {type: "statcalc", analysis}};
+  if (action === "json") return {text: JSON.stringify(analysis, null, 2), audit};
   const lines = ["StatCalc2 | " + dataset.rowCount + " rows | " + percent + "% confidence"];
   reports.forEach(report => {
     const {column, summary, intervals, findings} = report;
@@ -137,7 +148,7 @@ function statsExecute(action, text) {
     pair.trace.outputs.forEach(o => lines.push("  " + o.label + ": " + format(o.value)));
     if (pair.smallExpected) lines.push("  Caution: " + pair.smallExpected + " expected cell counts are below 5.");
   });
-  return lines.join("\n");
+  return {text: lines.join("\n"), audit};
 }
 
 async function main() {
@@ -147,8 +158,10 @@ async function main() {
   const input = JSON.parse(fs.readFileSync(0, "utf8"));
   const engine = manifest.extensions.calculator.engine;
   loadEngine(directory, engine);
-  const text = engine === "cryptocalc" ? await cryptoExecute(process.argv[3], input.text) : statsExecute(process.argv[3], input.text);
-  if (text.length > 100_000) throw new Error("Result exceeds the terminal display limit. Use a smaller input or Open full calculator.");
-  process.stdout.write(JSON.stringify({text}));
+  const result = engine === "cryptocalc" ? await cryptoExecute(process.argv[3], input.text) : statsExecute(process.argv[3], input.text);
+  if (result.text.length > 100_000) throw new Error("Result exceeds the terminal display limit. Use a smaller input or Open full calculator.");
+  const response = JSON.stringify(result);
+  if (Buffer.byteLength(response, "utf8") > 1_500_000) throw new Error("Result is too large for the terminal. Use a smaller dataset or Open full calculator.");
+  process.stdout.write(response);
 }
 main().catch(error => process.stdout.write(JSON.stringify({error: error.message})));

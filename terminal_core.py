@@ -1,7 +1,7 @@
 """Small module registry and subprocess transport, independent of any AI runtime."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import codecs
 import os
@@ -40,6 +40,7 @@ class TerminalModule:
     version: str = "1.0.0"
     api_version: str = API_VERSION
     min_host_version: str = "1.0.0"
+    extensions: dict = field(default_factory=dict)
 
     @classmethod
     def load(cls, path):
@@ -49,6 +50,8 @@ class TerminalModule:
         data = strict_json(path.read_text(encoding="utf-8-sig"))
         if not isinstance(data, dict):
             raise ValueError("The module manifest must be a JSON object")
+        if not isinstance(data.get("extensions", {}), dict):
+            raise ValueError("Module extensions must be an object")
         required = {"schema", "id", "name", "version", "api_version", "min_host_version", "protocol", "command", "actions"}
         if required - set(data):
             raise ValueError("Missing manifest fields: " + ", ".join(sorted(required - set(data))))
@@ -110,7 +113,7 @@ class TerminalModule:
                         raise ValueError("Numeric setting bounds must be numbers")
         return cls(path, identifier, name, str(data.get("description", ""))[:300], command,
                    str(data.get("cwd", "{module}")), protocol, actions, settings,
-                   data["version"], data["api_version"], data["min_host_version"])
+                   data["version"], data["api_version"], data["min_host_version"], data.get("extensions", {}))
 
     def settings_path(self, app_root):
         if not self.settings:

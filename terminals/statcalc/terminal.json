@@ -3,10 +3,10 @@
   "$schema": "../../terminal_sdk/terminal.schema.json",
   "id": "statcalc",
   "name": "StatCalc2",
-  "description": "Local StatCalc2 engine: terminal calculations and optional full visual calculator. Requires Node.js 22+.",
-  "version": "1.0.0",
+  "description": "Visual data grid, statistics, intervals and charts.",
+  "version": "1.1.0",
   "api_version": "1.0.0",
-  "min_host_version": "1.0.0",
+  "min_host_version": "1.5.0",
   "protocol": "jsonrpc",
   "command": [
     "{python}",
@@ -50,6 +50,10 @@
     "calculator": {
       "engine": "statcalc",
       "source_sha256": "f05c5c3bec69adb9f5db3d44b49b3fb44f9eb068b38dcdb239c56e35f253dfa9"
+    },
+    "workspace": {
+      "type": "calculator",
+      "engine": "statcalc"
     }
   }
 }

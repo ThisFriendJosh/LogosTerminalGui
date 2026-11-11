@@ -1,0 +1,1519 @@
+[
+  {
+    "id": "to_base64",
+    "name": "To Base64",
+    "category": "encodings",
+    "hint": "bytes to Base64 text",
+    "params": [
+      {
+        "key": "alphabet",
+        "label": "Alphabet",
+        "type": "select",
+        "options": [
+          "standard",
+          "url safe"
+        ],
+        "default": "standard"
+      },
+      {
+        "key": "pad",
+        "label": "Pad with =",
+        "type": "checkbox",
+        "default": true
+      }
+    ],
+    "defaults": {
+      "alphabet": "standard",
+      "pad": true
+    }
+  },
+  {
+    "id": "from_base64",
+    "name": "From Base64",
+    "category": "encodings",
+    "hint": "Base64 text to bytes",
+    "params": [
+      {
+        "key": "strict",
+        "label": "Refuse stray characters",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "strict": false
+    }
+  },
+  {
+    "id": "to_base32",
+    "name": "To Base32",
+    "category": "encodings",
+    "hint": "bytes to Base32 text",
+    "params": [
+      {
+        "key": "pad",
+        "label": "Pad with =",
+        "type": "checkbox",
+        "default": true
+      }
+    ],
+    "defaults": {
+      "pad": true
+    }
+  },
+  {
+    "id": "from_base32",
+    "name": "From Base32",
+    "category": "encodings",
+    "hint": "Base32 text to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_base58",
+    "name": "To Base58",
+    "category": "encodings",
+    "hint": "bytes to Base58 text",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "from_base58",
+    "name": "From Base58",
+    "category": "encodings",
+    "hint": "Base58 text to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_base85",
+    "name": "To Base85",
+    "category": "encodings",
+    "hint": "bytes to Ascii85 text",
+    "params": [
+      {
+        "key": "wrap",
+        "label": "Wrap in <~ ~>",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "wrap": false
+    }
+  },
+  {
+    "id": "from_base85",
+    "name": "From Base85",
+    "category": "encodings",
+    "hint": "Ascii85 text to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "md5",
+    "name": "MD5",
+    "category": "hashes",
+    "hint": "128 bit digest",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "sha1",
+    "name": "SHA 1",
+    "category": "hashes",
+    "hint": "160 bit digest",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "sha256",
+    "name": "SHA 256",
+    "category": "hashes",
+    "hint": "256 bit digest",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "sha384",
+    "name": "SHA 384",
+    "category": "hashes",
+    "hint": "384 bit digest",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "sha512",
+    "name": "SHA 512",
+    "category": "hashes",
+    "hint": "512 bit digest",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "crc32",
+    "name": "CRC32",
+    "category": "hashes",
+    "hint": "32 bit checksum",
+    "params": [
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "decimal"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "format": "hex"
+    }
+  },
+  {
+    "id": "hmac",
+    "name": "HMAC",
+    "category": "hashes",
+    "hint": "keyed hash",
+    "params": [
+      {
+        "key": "algorithm",
+        "label": "Hash",
+        "type": "select",
+        "options": [
+          "sha256",
+          "sha1",
+          "md5",
+          "sha384",
+          "sha512"
+        ],
+        "default": "sha256"
+      },
+      {
+        "key": "key",
+        "label": "Key",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "utf-8"
+        }
+      },
+      {
+        "key": "format",
+        "label": "Output",
+        "type": "select",
+        "options": [
+          "hex",
+          "HEX",
+          "base64"
+        ],
+        "default": "hex"
+      }
+    ],
+    "defaults": {
+      "algorithm": "sha256",
+      "key": {
+        "value": "",
+        "format": "utf-8"
+      },
+      "format": "hex"
+    }
+  },
+  {
+    "id": "pbkdf2",
+    "name": "Derive key (PBKDF2)",
+    "category": "crypto",
+    "hint": "password to key bytes",
+    "params": [
+      {
+        "key": "salt",
+        "label": "Salt",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "iterations",
+        "label": "Iterations",
+        "type": "number",
+        "default": 100000,
+        "min": 1,
+        "max": 10000000
+      },
+      {
+        "key": "hash",
+        "label": "Hash",
+        "type": "select",
+        "options": [
+          "sha256",
+          "sha1",
+          "sha512",
+          "sha384"
+        ],
+        "default": "sha256"
+      },
+      {
+        "key": "length",
+        "label": "Key length (bytes)",
+        "type": "select",
+        "options": [
+          "16",
+          "20",
+          "24",
+          "32",
+          "64"
+        ],
+        "default": "32"
+      }
+    ],
+    "defaults": {
+      "salt": {
+        "value": "",
+        "format": "hex"
+      },
+      "iterations": 100000,
+      "hash": "sha256",
+      "length": "32"
+    }
+  },
+  {
+    "id": "caesar_encode",
+    "name": "Caesar encode",
+    "category": "classical",
+    "hint": "shift letters forward",
+    "params": [
+      {
+        "key": "shift",
+        "label": "Shift",
+        "type": "number",
+        "default": 3,
+        "min": 0,
+        "max": 25
+      }
+    ],
+    "defaults": {
+      "shift": 3
+    }
+  },
+  {
+    "id": "caesar_decode",
+    "name": "Caesar decode",
+    "category": "classical",
+    "hint": "shift letters back",
+    "params": [
+      {
+        "key": "shift",
+        "label": "Shift",
+        "type": "number",
+        "default": 3,
+        "min": 0,
+        "max": 25
+      }
+    ],
+    "defaults": {
+      "shift": 3
+    }
+  },
+  {
+    "id": "rot13",
+    "name": "ROT13",
+    "category": "classical",
+    "hint": "rotate letters 13",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "rot47",
+    "name": "ROT47",
+    "category": "classical",
+    "hint": "rotate all printable characters",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "atbash",
+    "name": "Atbash",
+    "category": "classical",
+    "hint": "A to Z, B to Y",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "affine_encode",
+    "name": "Affine encode",
+    "category": "classical",
+    "hint": "multiply then shift",
+    "params": [
+      {
+        "key": "a",
+        "label": "a (coprime to 26)",
+        "type": "number",
+        "default": 5,
+        "min": 1,
+        "max": 25
+      },
+      {
+        "key": "b",
+        "label": "b",
+        "type": "number",
+        "default": 8,
+        "min": 0,
+        "max": 25
+      }
+    ],
+    "defaults": {
+      "a": 5,
+      "b": 8
+    }
+  },
+  {
+    "id": "affine_decode",
+    "name": "Affine decode",
+    "category": "classical",
+    "hint": "undo multiply and shift",
+    "params": [
+      {
+        "key": "a",
+        "label": "a (coprime to 26)",
+        "type": "number",
+        "default": 5,
+        "min": 1,
+        "max": 25
+      },
+      {
+        "key": "b",
+        "label": "b",
+        "type": "number",
+        "default": 8,
+        "min": 0,
+        "max": 25
+      }
+    ],
+    "defaults": {
+      "a": 5,
+      "b": 8
+    }
+  },
+  {
+    "id": "substitution_encode",
+    "name": "Substitution encode",
+    "category": "classical",
+    "hint": "keyed alphabet swap",
+    "params": [
+      {
+        "key": "key",
+        "label": "Cipher alphabet (26 letters)",
+        "type": "text",
+        "default": "qwertyuiopasdfghjklzxcvbnm"
+      }
+    ],
+    "defaults": {
+      "key": "qwertyuiopasdfghjklzxcvbnm"
+    }
+  },
+  {
+    "id": "substitution_decode",
+    "name": "Substitution decode",
+    "category": "classical",
+    "hint": "keyed alphabet swap back",
+    "params": [
+      {
+        "key": "key",
+        "label": "Cipher alphabet (26 letters)",
+        "type": "text",
+        "default": "qwertyuiopasdfghjklzxcvbnm"
+      }
+    ],
+    "defaults": {
+      "key": "qwertyuiopasdfghjklzxcvbnm"
+    }
+  },
+  {
+    "id": "extract_iocs",
+    "name": "Extract indicators",
+    "category": "ioc",
+    "hint": "IPs, URLs, domains, emails, hashes",
+    "params": [
+      {
+        "key": "type",
+        "label": "Type",
+        "type": "select",
+        "options": [
+          "all",
+          "ipv4",
+          "ipv6",
+          "urls",
+          "domains",
+          "emails",
+          "md5",
+          "sha1",
+          "sha256"
+        ],
+        "default": "all"
+      },
+      {
+        "key": "headings",
+        "label": "Group under headings",
+        "type": "checkbox",
+        "default": true
+      }
+    ],
+    "defaults": {
+      "type": "all",
+      "headings": true
+    }
+  },
+  {
+    "id": "aes_encrypt",
+    "name": "AES encrypt",
+    "category": "crypto",
+    "hint": "GCM or CBC",
+    "params": [
+      {
+        "key": "mode",
+        "label": "Mode",
+        "type": "select",
+        "options": [
+          "GCM",
+          "CBC"
+        ],
+        "default": "GCM"
+      },
+      {
+        "key": "keySource",
+        "label": "Key is",
+        "type": "select",
+        "options": [
+          "raw key",
+          "password"
+        ],
+        "default": "raw key"
+      },
+      {
+        "key": "key",
+        "label": "Key or password",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "salt",
+        "label": "Salt (password only)",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "iterations",
+        "label": "Iterations (password only)",
+        "type": "number",
+        "default": 100000,
+        "min": 1,
+        "max": 10000000
+      },
+      {
+        "key": "ivPlace",
+        "label": "IV",
+        "type": "select",
+        "options": [
+          "from IV field",
+          "first bytes of data"
+        ],
+        "default": "from IV field"
+      },
+      {
+        "key": "iv",
+        "label": "IV",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "prependIv",
+        "label": "Put the IV in front of the output",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "mode": "GCM",
+      "keySource": "raw key",
+      "key": {
+        "value": "",
+        "format": "hex"
+      },
+      "salt": {
+        "value": "",
+        "format": "hex"
+      },
+      "iterations": 100000,
+      "ivPlace": "from IV field",
+      "iv": {
+        "value": "",
+        "format": "hex"
+      },
+      "prependIv": false
+    }
+  },
+  {
+    "id": "aes_decrypt",
+    "name": "AES decrypt",
+    "category": "crypto",
+    "hint": "GCM or CBC",
+    "params": [
+      {
+        "key": "mode",
+        "label": "Mode",
+        "type": "select",
+        "options": [
+          "GCM",
+          "CBC"
+        ],
+        "default": "GCM"
+      },
+      {
+        "key": "keySource",
+        "label": "Key is",
+        "type": "select",
+        "options": [
+          "raw key",
+          "password"
+        ],
+        "default": "raw key"
+      },
+      {
+        "key": "key",
+        "label": "Key or password",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "salt",
+        "label": "Salt (password only)",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      },
+      {
+        "key": "iterations",
+        "label": "Iterations (password only)",
+        "type": "number",
+        "default": 100000,
+        "min": 1,
+        "max": 10000000
+      },
+      {
+        "key": "ivPlace",
+        "label": "IV",
+        "type": "select",
+        "options": [
+          "from IV field",
+          "first bytes of data"
+        ],
+        "default": "from IV field"
+      },
+      {
+        "key": "iv",
+        "label": "IV",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      }
+    ],
+    "defaults": {
+      "mode": "GCM",
+      "keySource": "raw key",
+      "key": {
+        "value": "",
+        "format": "hex"
+      },
+      "salt": {
+        "value": "",
+        "format": "hex"
+      },
+      "iterations": 100000,
+      "ivPlace": "from IV field",
+      "iv": {
+        "value": "",
+        "format": "hex"
+      }
+    }
+  },
+  {
+    "id": "decompress",
+    "name": "Decompress",
+    "category": "compression",
+    "hint": "gzip, zlib or raw deflate",
+    "params": [
+      {
+        "key": "format",
+        "label": "Format",
+        "type": "select",
+        "options": [
+          "auto",
+          "gzip",
+          "zlib",
+          "raw deflate"
+        ],
+        "default": "auto"
+      }
+    ],
+    "defaults": {
+      "format": "auto"
+    }
+  },
+  {
+    "id": "compress",
+    "name": "Compress",
+    "category": "compression",
+    "hint": "gzip, zlib or raw deflate",
+    "params": [
+      {
+        "key": "format",
+        "label": "Format",
+        "type": "select",
+        "options": [
+          "gzip",
+          "zlib",
+          "raw deflate"
+        ],
+        "default": "gzip"
+      }
+    ],
+    "defaults": {
+      "format": "gzip"
+    }
+  },
+  {
+    "id": "defang",
+    "name": "Defang",
+    "category": "ioc",
+    "hint": "make links unclickable",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "refang",
+    "name": "Refang",
+    "category": "ioc",
+    "hint": "make defanged links live again",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "entropy",
+    "name": "Shannon entropy",
+    "category": "inspect",
+    "hint": "how random the data is",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "json_pretty",
+    "name": "JSON pretty print",
+    "category": "inspect",
+    "hint": "indent JSON",
+    "params": [
+      {
+        "key": "indent",
+        "label": "Indent",
+        "type": "select",
+        "options": [
+          "2 spaces",
+          "4 spaces",
+          "tab"
+        ],
+        "default": "2 spaces"
+      }
+    ],
+    "defaults": {
+      "indent": "2 spaces"
+    }
+  },
+  {
+    "id": "json_minify",
+    "name": "JSON minify",
+    "category": "inspect",
+    "hint": "squash JSON onto one line",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "jwt_decode",
+    "name": "JWT decode",
+    "category": "inspect",
+    "hint": "header and claims, not verified",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "detect_file_type",
+    "name": "Detect file type",
+    "category": "inspect",
+    "hint": "from magic bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_morse",
+    "name": "To Morse",
+    "category": "encodings",
+    "hint": "letters to dots and dashes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "from_morse",
+    "name": "From Morse",
+    "category": "encodings",
+    "hint": "dots and dashes to letters",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_hex",
+    "name": "To Hex",
+    "category": "encodings",
+    "hint": "bytes as hex pairs",
+    "params": [
+      {
+        "key": "separator",
+        "label": "Separator",
+        "type": "select",
+        "options": [
+          "space",
+          "none",
+          "comma",
+          "colon",
+          "new line",
+          "0x prefix"
+        ],
+        "default": "space"
+      }
+    ],
+    "defaults": {
+      "separator": "space"
+    }
+  },
+  {
+    "id": "from_hex",
+    "name": "From Hex",
+    "category": "encodings",
+    "hint": "hex pairs to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "hex_dump",
+    "name": "Hex dump",
+    "category": "encodings",
+    "hint": "offset, hex and text columns",
+    "params": [
+      {
+        "key": "maxBytes",
+        "label": "Bytes to show",
+        "type": "number",
+        "default": 4096,
+        "min": 16,
+        "max": 1048576
+      }
+    ],
+    "defaults": {
+      "maxBytes": 4096
+    }
+  },
+  {
+    "id": "to_binary",
+    "name": "To Binary",
+    "category": "encodings",
+    "hint": "bytes as 8 bit groups",
+    "params": [
+      {
+        "key": "separator",
+        "label": "Separator",
+        "type": "select",
+        "options": [
+          "space",
+          "none",
+          "comma",
+          "new line"
+        ],
+        "default": "space"
+      }
+    ],
+    "defaults": {
+      "separator": "space"
+    }
+  },
+  {
+    "id": "from_binary",
+    "name": "From Binary",
+    "category": "encodings",
+    "hint": "8 bit groups to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_octal",
+    "name": "To Octal",
+    "category": "encodings",
+    "hint": "bytes in base 8",
+    "params": [
+      {
+        "key": "separator",
+        "label": "Separator",
+        "type": "select",
+        "options": [
+          "space",
+          "none",
+          "comma",
+          "new line"
+        ],
+        "default": "space"
+      }
+    ],
+    "defaults": {
+      "separator": "space"
+    }
+  },
+  {
+    "id": "from_octal",
+    "name": "From Octal",
+    "category": "encodings",
+    "hint": "base 8 values to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "to_decimal",
+    "name": "To Decimal",
+    "category": "encodings",
+    "hint": "bytes as numbers 0 to 255",
+    "params": [
+      {
+        "key": "separator",
+        "label": "Separator",
+        "type": "select",
+        "options": [
+          "space",
+          "comma",
+          "new line"
+        ],
+        "default": "space"
+      }
+    ],
+    "defaults": {
+      "separator": "space"
+    }
+  },
+  {
+    "id": "from_decimal",
+    "name": "From Decimal",
+    "category": "encodings",
+    "hint": "numbers 0 to 255 to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "rail_fence_encode",
+    "name": "Rail fence encode",
+    "category": "classical",
+    "hint": "zigzag transposition",
+    "params": [
+      {
+        "key": "rails",
+        "label": "Rails",
+        "type": "number",
+        "default": 3,
+        "min": 2,
+        "max": 64
+      }
+    ],
+    "defaults": {
+      "rails": 3
+    }
+  },
+  {
+    "id": "rail_fence_decode",
+    "name": "Rail fence decode",
+    "category": "classical",
+    "hint": "undo the zigzag",
+    "params": [
+      {
+        "key": "rails",
+        "label": "Rails",
+        "type": "number",
+        "default": 3,
+        "min": 2,
+        "max": 64
+      }
+    ],
+    "defaults": {
+      "rails": 3
+    }
+  },
+  {
+    "id": "strings",
+    "name": "Strings",
+    "category": "inspect",
+    "hint": "readable text inside binary",
+    "params": [
+      {
+        "key": "min",
+        "label": "Minimum length",
+        "type": "number",
+        "default": 4,
+        "min": 2,
+        "max": 100
+      },
+      {
+        "key": "encoding",
+        "label": "Look for",
+        "type": "select",
+        "options": [
+          "ascii and utf-16le",
+          "ascii",
+          "utf-16le"
+        ],
+        "default": "ascii and utf-16le"
+      },
+      {
+        "key": "offsets",
+        "label": "Show offsets",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "min": 4,
+      "encoding": "ascii and utf-16le",
+      "offsets": false
+    }
+  },
+  {
+    "id": "regex_replace",
+    "name": "Find and replace",
+    "category": "text",
+    "hint": "regular expression replace",
+    "params": [
+      {
+        "key": "pattern",
+        "label": "Pattern (regular expression)",
+        "type": "text",
+        "default": ""
+      },
+      {
+        "key": "ignoreCase",
+        "label": "Ignore case",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "key": "multiline",
+        "label": "^ and $ match each line",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "key": "replacement",
+        "label": "Replace with ($1 for groups)",
+        "type": "text",
+        "default": ""
+      }
+    ],
+    "defaults": {
+      "pattern": "",
+      "ignoreCase": true,
+      "multiline": true,
+      "replacement": ""
+    }
+  },
+  {
+    "id": "regex_extract",
+    "name": "Extract matches",
+    "category": "text",
+    "hint": "list every regex match",
+    "params": [
+      {
+        "key": "pattern",
+        "label": "Pattern (regular expression)",
+        "type": "text",
+        "default": ""
+      },
+      {
+        "key": "ignoreCase",
+        "label": "Ignore case",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "key": "multiline",
+        "label": "^ and $ match each line",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "key": "group",
+        "label": "Group to keep (0 for whole match)",
+        "type": "number",
+        "default": 0,
+        "min": 0,
+        "max": 9
+      }
+    ],
+    "defaults": {
+      "pattern": "",
+      "ignoreCase": true,
+      "multiline": true,
+      "group": 0
+    }
+  },
+  {
+    "id": "sort_lines",
+    "name": "Sort lines",
+    "category": "text",
+    "hint": "alphabetic or numeric",
+    "params": [
+      {
+        "key": "order",
+        "label": "Order",
+        "type": "select",
+        "options": [
+          "a to z",
+          "z to a",
+          "numeric ascending",
+          "numeric descending",
+          "by length"
+        ],
+        "default": "a to z"
+      }
+    ],
+    "defaults": {
+      "order": "a to z"
+    }
+  },
+  {
+    "id": "unique_lines",
+    "name": "Unique lines",
+    "category": "text",
+    "hint": "drop repeated lines",
+    "params": [
+      {
+        "key": "count",
+        "label": "Show counts, most common first",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "count": false
+    }
+  },
+  {
+    "id": "count",
+    "name": "Count",
+    "category": "text",
+    "hint": "lines, words, characters, bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "reverse",
+    "name": "Reverse",
+    "category": "text",
+    "hint": "characters, lines or bytes",
+    "params": [
+      {
+        "key": "by",
+        "label": "Reverse",
+        "type": "select",
+        "options": [
+          "characters",
+          "lines",
+          "bytes"
+        ],
+        "default": "characters"
+      }
+    ],
+    "defaults": {
+      "by": "characters"
+    }
+  },
+  {
+    "id": "change_case",
+    "name": "Change case",
+    "category": "text",
+    "hint": "upper, lower, title, swap",
+    "params": [
+      {
+        "key": "to",
+        "label": "Case",
+        "type": "select",
+        "options": [
+          "upper",
+          "lower",
+          "title",
+          "swap"
+        ],
+        "default": "lower"
+      }
+    ],
+    "defaults": {
+      "to": "lower"
+    }
+  },
+  {
+    "id": "trim",
+    "name": "Trim and clean",
+    "category": "text",
+    "hint": "strip spaces and blank lines",
+    "params": [
+      {
+        "key": "mode",
+        "label": "Remove",
+        "type": "select",
+        "options": [
+          "ends of each line",
+          "blank lines",
+          "all whitespace",
+          "non printable characters"
+        ],
+        "default": "ends of each line"
+      }
+    ],
+    "defaults": {
+      "mode": "ends of each line"
+    }
+  },
+  {
+    "id": "convert_timestamp",
+    "name": "Convert timestamp",
+    "category": "inspect",
+    "hint": "epoch, ISO 8601, FILETIME",
+    "params": [
+      {
+        "key": "from",
+        "label": "From",
+        "type": "select",
+        "options": [
+          "auto",
+          "unix seconds",
+          "unix milliseconds",
+          "iso 8601",
+          "filetime"
+        ],
+        "default": "auto"
+      },
+      {
+        "key": "to",
+        "label": "To",
+        "type": "select",
+        "options": [
+          "unix seconds",
+          "unix milliseconds",
+          "iso 8601",
+          "filetime"
+        ],
+        "default": "iso 8601"
+      }
+    ],
+    "defaults": {
+      "from": "auto",
+      "to": "iso 8601"
+    }
+  },
+  {
+    "id": "vigenere_encode",
+    "name": "Vigen\u00e8re encode",
+    "category": "classical",
+    "hint": "keyword shifts",
+    "params": [
+      {
+        "key": "key",
+        "label": "Key",
+        "type": "text",
+        "default": "lemon"
+      }
+    ],
+    "defaults": {
+      "key": "lemon"
+    }
+  },
+  {
+    "id": "vigenere_decode",
+    "name": "Vigen\u00e8re decode",
+    "category": "classical",
+    "hint": "keyword shifts back",
+    "params": [
+      {
+        "key": "key",
+        "label": "Key",
+        "type": "text",
+        "default": "lemon"
+      }
+    ],
+    "defaults": {
+      "key": "lemon"
+    }
+  },
+  {
+    "id": "url_encode",
+    "name": "URL encode",
+    "category": "encodings",
+    "hint": "space to %20 and so on",
+    "params": [
+      {
+        "key": "all",
+        "label": "Encode every character",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "all": false
+    }
+  },
+  {
+    "id": "url_decode",
+    "name": "URL decode",
+    "category": "encodings",
+    "hint": "%20 back to space",
+    "params": [
+      {
+        "key": "plus",
+        "label": "Read + as space",
+        "type": "checkbox",
+        "default": true
+      }
+    ],
+    "defaults": {
+      "plus": true
+    }
+  },
+  {
+    "id": "html_entity_encode",
+    "name": "HTML entity encode",
+    "category": "encodings",
+    "hint": "< to &lt; and so on",
+    "params": [
+      {
+        "key": "all",
+        "label": "Encode everything but letters and digits",
+        "type": "checkbox",
+        "default": false
+      }
+    ],
+    "defaults": {
+      "all": false
+    }
+  },
+  {
+    "id": "html_entity_decode",
+    "name": "HTML entity decode",
+    "category": "encodings",
+    "hint": "&lt; back to <",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "unicode_escape",
+    "name": "Unicode escape",
+    "category": "encodings",
+    "hint": "characters to \\uXXXX",
+    "params": [
+      {
+        "key": "style",
+        "label": "Escape",
+        "type": "select",
+        "options": [
+          "non ASCII",
+          "all",
+          "\\u{hex}"
+        ],
+        "default": "non ASCII"
+      }
+    ],
+    "defaults": {
+      "style": "non ASCII"
+    }
+  },
+  {
+    "id": "unicode_unescape",
+    "name": "Unicode unescape",
+    "category": "encodings",
+    "hint": "\\uXXXX back to characters",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "quoted_printable_encode",
+    "name": "Quoted printable encode",
+    "category": "encodings",
+    "hint": "email style =XX bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "quoted_printable_decode",
+    "name": "Quoted printable decode",
+    "category": "encodings",
+    "hint": "=XX back to bytes",
+    "params": [],
+    "defaults": {}
+  },
+  {
+    "id": "decode_text",
+    "name": "Decode text",
+    "category": "encodings",
+    "hint": "read bytes as UTF-16 or Latin 1",
+    "params": [
+      {
+        "key": "charset",
+        "label": "Character set",
+        "type": "select",
+        "options": [
+          "utf-8",
+          "utf-16le",
+          "utf-16be",
+          "latin1"
+        ],
+        "default": "utf-16le"
+      }
+    ],
+    "defaults": {
+      "charset": "utf-16le"
+    }
+  },
+  {
+    "id": "encode_text",
+    "name": "Encode text",
+    "category": "encodings",
+    "hint": "write text as UTF-16 or Latin 1",
+    "params": [
+      {
+        "key": "charset",
+        "label": "Character set",
+        "type": "select",
+        "options": [
+          "utf-8",
+          "utf-16le",
+          "utf-16be",
+          "latin1"
+        ],
+        "default": "utf-16le"
+      }
+    ],
+    "defaults": {
+      "charset": "utf-16le"
+    }
+  },
+  {
+    "id": "xor",
+    "name": "XOR",
+    "category": "xor",
+    "hint": "repeating key",
+    "params": [
+      {
+        "key": "key",
+        "label": "Key",
+        "type": "key",
+        "default": {
+          "value": "",
+          "format": "hex"
+        }
+      }
+    ],
+    "defaults": {
+      "key": {
+        "value": "",
+        "format": "hex"
+      }
+    }
+  }
+]

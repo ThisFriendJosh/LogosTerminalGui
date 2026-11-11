@@ -1,17 +1,36 @@
 # Calculator terminals
 
 CryptoCalc and StatCalc2 are discovered automatically from `terminals/` and use
-the existing JSON-RPC 1.0 module interface. Select either terminal, connect, and
-choose its action. Each includes Help with copyable examples.
+the existing JSON-RPC 1.0 module interface. **Host 1.5.0 or newer** displays a
+visual workspace by default. Select either terminal, enter data with its visual
+controls and press Run recipe or Analyze data. The worker connects when needed;
+selecting a module alone does not launch a process.
+
+CryptoCalc has a searchable list of 73 original operations, ordered recipe
+steps with editable parameters and enable/disable controls, file import,
+text/hex output, a step table, output saving and recipe save/load compatible
+with CryptoCalc's original format 1 files. The visual editor allows 50 steps.
+
+StatCalc2 has an editable grid with column names, add-row/add-column controls,
+file import, CSV/text paste, confidence controls, overview and interval tables,
+findings and interactive column selection for histograms or category frequency
+charts. Multiline paste in the grid opens the pasted-data editor. Grid entry
+supports 200 rows and 20 columns; pasted/imported data uses the terminal limits.
+Charts show counts from the original engine's parsed columns.
+
+The workspaces follow the selected Logos theme. Module switching, switching
+between Visual workspace and Terminal, and theme changes retain drafts, recipes,
+results and existing worker sessions in memory. Closing the host clears these
+calculator drafts. Editing input marks existing results as belonging to the
+previous run until the next calculation completes.
 
 | Module | Terminal actions | Full calculator |
 | --- | --- | --- |
-| CryptoCalc | Single operations, multi-step JSON recipes, searchable operation reference | Visual recipe editor, file import, cipher busting, charts and exports |
-| StatCalc2 | CSV/numeric/categorical summaries, confidence intervals, findings, numeric correlations, categorical cross-tabs, JSON traces | Charts, bootstrap, mixed-column group comparisons, file import and exports |
+| CryptoCalc | Visual operation/recipe editor, parameter forms, text/hex output, recipe files; text actions remain available | Cipher busting, reports and extended exports |
+| StatCalc2 | Visual grid/paste editor, confidence controls, summary/interval tables, findings, histogram/category charts; text actions remain available | Bootstrap, mixed-column group comparisons and extended exports |
 
-For CryptoCalc, choose **Run operation or recipe** and enter `to_base64 Hello`.
-For StatCalc2, choose **Analyze data** and paste `1,2,3,4,5`. Choose **Help and
-examples** for recipes, CSV examples and custom confidence levels.
+For command input, choose **Terminal**: CryptoCalc accepts `to_base64 Hello`;
+StatCalc2 accepts `1,2,3,4,5` or CSV. Each retains Help with copyable examples.
 
 The host continues to need only Python/Tk and the standard library. Calculator
 execution additionally needs **Node.js 22 or newer** on PATH (the standard
@@ -26,15 +45,19 @@ and findings. Input is passed as JSON through stdin, never as executable code
 or shell arguments. Errors return through the module protocol; the module
 remains available for the next request. The shared worker is not a terminal.
 
-**Open full calculator** opens the bundled offline HTML in the default browser.
+**Full HTML app** opens the bundled offline HTML in the default browser.
 It preserves the original complete interface, embedded fonts and font license.
-The host's text module contract has no embedded HTML surface, so this explicit
-action opens a browser. The native calculation actions display their results
-directly in the terminal transcript. Browser and terminal calculations do not
-share drafts or automatically transfer datasets.
+The in-host visual workspace uses native Tk controls and sends requests to the
+same isolated engines. It requires no embedded browser package. Browser and
+native calculations do not automatically transfer drafts or datasets; recipe
+files can be exchanged through Save and Load. Binary file import in the native
+CryptoCalc editor adds a From Hex step, preserving the original file bytes.
 
 Terminal limits: 250 KB input, 100,000 output characters, 30 seconds, 64 recipe
 steps or 20 statistical columns. The full apps retain their own original limits.
+Native CryptoCalc file import is capped at 120 KB to allow binary-to-hex expansion.
+The text recipe action permits 64 steps; the visual editor follows the original
+recipe-file limit of 50.
 Calculator actions do not store input or results themselves; the host retains
 its existing transcript behavior. Other terminal settings and sessions are untouched.
 
@@ -51,5 +74,7 @@ builds. SHA-256 digests are recorded in each manifest and checked by tests:
 To update a calculator, replace its `app.html` with a new verified self-contained
 build, update the manifest checksum and module version, and run the module
 tests plus the repository validation checks. Original script path markers must
-remain available for the shared engine loader. This integration follows the
+remain available for the shared engine loader. Regenerate CryptoCalc's data-only
+`operations.json` from the runner's operations result `audit.calculator.operations`;
+the test suite verifies this catalogue against the engine. This integration follows the
 repository's GPL v3 license; the embedded Jost fonts retain their SIL OFL notice.
