@@ -52,7 +52,20 @@ The connector launches the backend in its own process and directory. Models, Bib
 
 For **Dungeon Master**, use a companion `dwa-terminal` worker from a terminal-enabled [Dungeon World AI](https://github.com/ThisFriendJosh/Dungeon-World-AI) build. Select that worker under **Settings > Terminal Manager > Dungeon Master > Settings**, then Test connection. The Windows beta's existing runtime/model are detected. The terminal uses separate test saves by default and supports Play, campaigns, character selection, actual dice and status. The companion worker is a separate backend deliverable; see [Dungeon Master setup](docs/DUNGEON_MASTER.md).
 
-Use **Load terminal > Load a module** to select a module's `terminal.json`. Its sidebar entry and action buttons appear immediately. Loading registers the module; Connect or Send starts its process.
+Use **Load terminal > Browse terminal folders** to open `terminals/`, open the
+module's subfolder and select `terminal.json`. Its sidebar entry appears
+immediately. Loading registers the module; Connect or Send starts its process.
+
+**Unload terminal** below the sidebar removes the selected icon while keeping
+all module files, settings and saved data. You can also right-click an icon and
+choose **Unload from sidebar**, or use Terminal Manager. **Load terminal >
+Reload selected** restores an entry from the Previously unloaded list.
+
+The sidebar remembers explicit Load/Unload choices across restarts. Copying a
+new module folder into `terminals/` makes its files available to browse; use
+Load terminal to add its icon. On the first run after upgrading, the current
+sidebar is retained as the initial loaded list. Connect/Disconnect controls
+continue to manage the selected terminal's worker separately.
 
 Use **Load terminal > Link an existing terminal** for a normal Python script, executable, or Windows batch terminal. This uses a plain-text adapter. Full-screen terminal UIs need a dedicated adapter; this application does not embed other GUI application windows.
 
