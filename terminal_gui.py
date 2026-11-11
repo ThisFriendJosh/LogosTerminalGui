@@ -20,6 +20,7 @@ from terminal_diagnostics import check, finish_connection_check, preflight
 from terminal_protocol import API_VERSION, HOST_VERSION
 from terminal_themes import RAIN_LIMITS, ThemeCatalog
 from terminal_visuals import Atmosphere, NeonScrollbar, PhosphorText, RainCanvas, draw_icon
+from calculator_workspace import CalculatorWorkspace, workspace_engine
 
 ROOT = Path(__file__).resolve().parent
 
@@ -232,6 +233,7 @@ class TerminalGUI:
         self.manager = None
         self.current = None
         self.panels, self.module_buttons, self.action_buttons = [], {}, {}
+        self.calculator_views = {}
         self.closing = False
         self.last_animation = time.monotonic()
         self.last_lighting = self.last_native_border = 0.0
@@ -344,9 +346,15 @@ class TerminalGUI:
         # Reserve control widths first; long module names cannot hide Connect.
         title_block.pack_forget()
         title_block.pack(side="left", fill="x", expand=True)
-        self.toolbar = tk.Frame(main, bg=BG)
+        self.view_bar = tk.Frame(main, bg=BG)
+        self.content = tk.Frame(main, bg=BG)
+        self.content.pack(fill="both", expand=True)
+        self.toolbar = tk.Frame(self.content, bg=BG)
         self.toolbar.pack(fill="x", pady=(0, 10))
-        transcript_panel = self.panel(main)
+        self.text_area = tk.Frame(self.content, bg=BG)
+        self.text_area.pack(fill="both", expand=True)
+        self.visual_area = tk.Frame(self.content, bg=BG)
+        transcript_panel = self.panel(self.text_area)
         transcript_panel.pack(fill="both", expand=True)
         transcript_top = tk.Frame(transcript_panel, bg=PANEL)
         transcript_top.pack(fill="x", padx=18, pady=(12, 0))
@@ -376,7 +384,7 @@ class TerminalGUI:
         self.transcript.tag_configure("muted", foreground=MUTED)
         self.transcript.tag_configure("error", foreground=ERROR, lmargin1=12, lmargin2=12)
         self.transcript.tag_configure("welcome", foreground=GREEN, font=(FONT_FAMILY, 21, "bold"), spacing1=20, spacing3=15)
-        composer = self.panel(main)
+        composer = self.panel(self.text_area)
         composer.pack(fill="x", pady=(12, 0))
         composer_top = tk.Frame(composer, bg=PANEL)
         composer_top.pack(fill="x", padx=17, pady=(12, 4))
@@ -447,6 +455,7 @@ class TerminalGUI:
 
     def empty_workspace(self):
         self.current = None
+        self.update_workspace_view()
         self.title.configure(text="YOUR TERMINAL WORKSPACE")
         self.subtitle.configure(text="Load a terminal to get started.")
         for child in self.toolbar.winfo_children():
@@ -491,6 +500,8 @@ class TerminalGUI:
             self.workspace()["input"] = self.input_text()
         self.reconnecting.pop(identifier, None)
         self.stop(identifier)
+        if identifier in self.calculator_views:
+            self.calculator_views.pop(identifier).destroy()
         self.connection_checks.pop(identifier, None)
         del self.modules[identifier]
         self.preferences["modules"] = [p for p in self.preferences["modules"] if Path(p).resolve() != module.path]
@@ -563,6 +574,8 @@ class TerminalGUI:
     def select_module(self, identifier):
         if self.current:
             self.workspace()["input"] = self.input_text()
+            if self.current in self.calculator_views:
+                self.calculator_views[self.current].snapshot()
         self.current = identifier
         self.preferences["selected"] = identifier
         module, state = self.modules[identifier], self.workspace()
@@ -583,8 +596,46 @@ class TerminalGUI:
         self.placeholder = False
         self.select_action(state["action"])
         self.render_transcript()
+        self.update_workspace_view()
         self.refresh_controls()
         self.save()
+        if self.atmosphere:
+            self.window.after_idle(self.refresh_atmosphere)
+
+    def update_workspace_view(self, visual=None):
+        for child in self.view_bar.winfo_children():
+            child.destroy()
+        module = self.modules.get(self.current)
+        engine = workspace_engine(module) if module else None
+        state = self.workspace() if module else {}
+        if visual is not None:
+            state["visual"] = visual
+        use_visual = bool(engine and state.get("visual", True))
+        if engine:
+            self.view_bar.pack(fill="x", pady=(0, 8), before=self.content)
+            for label, selected in [("Visual workspace", True), ("Terminal", False)]:
+                button = NeonButton(self.view_bar, label, lambda v=selected: self.update_workspace_view(v),
+                                    width=160 if selected else 100, height=32, small=True)
+                button.configure_state(active=use_visual == selected)
+                button.pack(side="left", padx=(0, 7))
+        else:
+            self.view_bar.pack_forget()
+        for view in self.calculator_views.values():
+            view.pack_forget()
+        if use_visual:
+            self.toolbar.pack_forget()
+            self.text_area.pack_forget()
+            self.visual_area.pack(fill="both", expand=True)
+            if self.current not in self.calculator_views:
+                self.calculator_views[self.current] = CalculatorWorkspace(self.visual_area, self, self.current, PALETTE)
+            self.calculator_views[self.current].pack(fill="both", expand=True)
+        else:
+            self.visual_area.pack_forget()
+            if self.text_area.winfo_manager():
+                self.toolbar.pack(fill="x", pady=(0, 10), before=self.text_area)
+            else:
+                self.toolbar.pack(fill="x", pady=(0, 10))
+            self.text_area.pack(fill="both", expand=True)
         if self.atmosphere:
             self.window.after_idle(self.refresh_atmosphere)
 
@@ -813,6 +864,8 @@ class TerminalGUI:
             self.input.insert("1.0", pending[1])
         state.update(busy=False, pending=None, request=None, status="Ready" if state["ready"] else "Connection failed")
         self.append(identifier, "error", message)
+        if identifier in self.calculator_views:
+            self.calculator_views[identifier].error(message)
         self.refresh_controls()
 
     def poll(self):
@@ -873,6 +926,11 @@ class TerminalGUI:
                 state["status"] = event.get("text", "Working…")
             elif kind == "result":
                 state.update(busy=False, pending=None, request=None, status="Connected")
+                if identifier in self.calculator_views:
+                    try:
+                        self.calculator_views[identifier].receive(event)
+                    except (ValueError, TypeError, KeyError, tk.TclError) as exc:
+                        self.append(identifier, "error", "Invalid calculator view data: " + str(exc))
                 if event.get("kind") in {"session_list", "module_list"}:
                     if identifier == self.current:
                         self.choose_item(identifier, event)
@@ -912,6 +970,8 @@ class TerminalGUI:
             self.footer.configure(text=f"{len(self.modules)} terminals loaded")
             return
         state = self.workspace()
+        if self.current in self.calculator_views:
+            self.calculator_views[self.current].set_busy(state["busy"])
         running = self.current in self.processes
         self.connect_button.configure_state(enabled=self.current not in self.reconnecting,
             text="Stop" if state["busy"] and running else "Disconnect" if running else "Connect")
@@ -1208,6 +1268,9 @@ class TerminalGUI:
         translation = self.translation.get()
         if selected:
             self.workspace()["input"] = self.input_text()
+        for view in self.calculator_views.values():
+            view.snapshot()
+        self.calculator_views = {}
         self.current = None
         self.atmosphere = None
         self.outer.destroy()

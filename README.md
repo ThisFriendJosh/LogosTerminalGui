@@ -31,10 +31,12 @@ To check that your Python includes Tk, run `python -m tkinter`. Some Linux distr
 
 Scratchpad is the default workspace. The LogosMind connector is optional; the host runs without LogosMind, model weights, or Bible data.
 
-Select **CryptoCalc** or **StatCalc2**, connect, then choose an action. CryptoCalc
-accepts `to_base64 Hello`; StatCalc2 accepts `1,2,3,4,5` or pasted CSV. Both have
-Help with examples and an **Open full calculator** action for charts, file import
-and exports in your browser. See [calculator modules](docs/CALCULATORS.md).
+Select **CryptoCalc** or **StatCalc2** for a visual workspace inside Logos Terminal.
+CryptoCalc provides an operation picker, recipe editor, parameter forms and
+text/hex output. StatCalc2 provides an editable data grid, result tables,
+confidence intervals, findings and distribution charts. **Terminal** switches
+back to text actions. **Full HTML app** opens the complete original interface
+in your browser. See [calculator modules](docs/CALCULATORS.md).
 
 ## Connect LogosMind
 

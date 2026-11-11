@@ -124,6 +124,26 @@ Advertise `new`, `sessions` and `resume` together when providing saved conversat
 
 ## Existing terminal programs
 
+### Optional calculator workspace (host 1.5.0)
+
+The bundled calculator modules declare a data-only UI extension:
+`"extensions": {"workspace": {"type": "calculator", "engine": "cryptocalc"}}`
+(or `"statcalc"`). Their manifests require host 1.5.0. The host renders its own
+native Tk controls; it never imports executable module code into the GUI.
+CryptoCalc's `operations.json` supplies the operation/parameter catalogue.
+Calculation remains in the separately launched adapter and uses the existing
+actions. Text actions remain available through the Terminal view.
+
+Calculator result payloads may include `audit.calculator` with `type` equal to
+the engine ID. CryptoCalc includes `output`, `hex`, `bytes`, `isText` and bounded
+`steps`; StatCalc2 includes `analysis` with the original `dataset`, `level`,
+`reports` and `pairs`. This is optional result metadata within API 1.0.0;
+ordinary text clients can ignore it. The adapter limits the serialized result
+to 1.5 MB, below the transport frame limit. Drafts, selected views and results
+belong to each in-memory host workspace and survive view/theme changes.
+
+### Linking console programs
+
 The GUI's **Load terminal → Link an existing terminal** creates a manifest using `protocol: "text"`. It supports ordinary redirected stdin/stdout console programs and Python scripts. It is not a full PTY/ConPTY emulator; full-screen TUI programs, cursor addressing and password prompts may need a dedicated adapter. GUI executables are not embedded as child application windows. Rich controls and capability checks require the JSON-RPC adapter.
 
 ## Validate before loading

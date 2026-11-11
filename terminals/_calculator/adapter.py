@@ -50,6 +50,7 @@ def main():
     channel.emit("ready", **metadata)
     for line in sys.stdin:
         request_id = None
+        extra = {}
         try:
             if len(line.encode("utf-8")) > MAX_LINE_BYTES:
                 raise ProtocolError("Request exceeds the 2 MB frame limit", -32600)
@@ -87,7 +88,9 @@ def main():
                 if "error" in response:
                     raise ValueError(response["error"])
                 result = response["text"]
-            channel.emit("result", id=request_id, kind="source", text=result)
+                if isinstance(response.get("audit"), dict):
+                    extra["audit"] = response["audit"]
+            channel.emit("result", id=request_id, kind="source", text=result, **extra)
         except Exception as exc:
             channel.emit("error", id=request_id if request_id is not None else channel.last_id,
                          text=str(exc), code=getattr(exc, "code", -32602 if isinstance(exc, ValueError) else -32000))

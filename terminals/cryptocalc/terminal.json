@@ -3,10 +3,10 @@
   "$schema": "../../terminal_sdk/terminal.schema.json",
   "id": "cryptocalc",
   "name": "CryptoCalc",
-  "description": "Local CryptoCalc engine: terminal calculations and optional full visual calculator. Requires Node.js 22+.",
-  "version": "1.0.0",
+  "description": "Visual operations, recipes and encoding workbench.",
+  "version": "1.1.0",
   "api_version": "1.0.0",
-  "min_host_version": "1.0.0",
+  "min_host_version": "1.5.0",
   "protocol": "jsonrpc",
   "command": [
     "{python}",
@@ -50,6 +50,10 @@
     "calculator": {
       "engine": "cryptocalc",
       "source_sha256": "e839064132158b7eaf47dbcc1e6d6c196009476bbabad5dd3452e8dd4fe4d368"
+    },
+    "workspace": {
+      "type": "calculator",
+      "engine": "cryptocalc"
     }
   }
 }
